@@ -244,20 +244,20 @@ if [[ "${SYS_PYTHON_VERSION}" < 3.3 ]]; then
     echo -e "\npip install virtualenv"
     exit
   else
-    virtualenv siqaco-env -p python3.6
+    virtualenv morumotto-env -p python3.6
   fi
 else
-  python -m venv siqaco-env || exit
+  python -m venv morumotto-env || exit
 fi
 
-if ! [[ -d  "${dir}/siqaco-env" ]]; then
+if ! [[ -d  "${dir}/morumotto-env" ]]; then
   echo -e "\n ERROR : failed to create virtual environment."
   echo -e "\n Exiting...\n"
   exit
 fi;
 
 #________________________INSTALL PYTHON DEP________________________#
-source siqaco-env/bin/activate
+source morumotto-env/bin/activate
 pip install numpy==1.16.4 || exit
 # Due to a bug in obspy setup.py, we need to install numpy first
 pip install -r requirements.txt || (echo -e "\Error while installing project's \
@@ -272,7 +272,7 @@ python manage.py migrate || exit
 #________________________CREATE ADMIN USER________________________#
 read -p "Do you want to create an administrator user now? [(y)/n] > " answer
 if ! [[ "${answer}" =~ ^([Nn])+$ ]] ;then
-  echo -e "\nYou will now create the administrator of SIQACO, don't forget \
+  echo -e "\nYou will now create the administrator of MORUMOTTO, don't forget \
   the password your will enter !\n"
   python manage.py createsuperuser || exit
 else
@@ -288,7 +288,7 @@ echo -e "\nCreating supervisor configuration file"
 
 cat <<EOT >> morumotto.conf
 [program:morumotto_celery]
-command = ${dir}/siqaco-env/bin/celery -A siqaco worker -l info
+command = ${dir}/morumotto-env/bin/celery -A siqaco worker -l info
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_celery.log
@@ -299,7 +299,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_flower]
-command = ${dir}/siqaco-env/bin/celery flower -A siqaco --address=127.0.0.1 --port=5555
+command = ${dir}/morumotto-env/bin/celery flower -A siqaco --address=127.0.0.1 --port=5555
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_flower.log
@@ -310,7 +310,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_runserver]
-command = ${dir}/siqaco-env/bin/python manage.py runserver 0.0.0.0:8000
+command = ${dir}/morumotto-env/bin/python manage.py runserver 0.0.0.0:8000
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_runserver.log
@@ -331,5 +331,5 @@ sudo supervisorctl reread
 sudo supervisorctl update
 
 #________________________INSTALL COMPLETE !________________________#
-echo -e "\nInstallation complete ! You can now use SIQACO ! "
+echo -e "\nInstallation complete ! You can now use MORUMOTTO ! "
 echo -e "\nTo get started, visit http://127.0.0.1:8000/home/  \nBye !\n"

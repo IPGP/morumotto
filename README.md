@@ -12,17 +12,17 @@
 - Step 1, in mysql _(not required, but recommanded)_
 
     ```sql
-    CREATE DATABASE SIQACO;
-    CREATE USER 'siqaco_user'@'localhost' IDENTIFIED BY 'some password';
-    GRANT ALL ON SIQACO.* TO 'siqaco_user'@'localhost';
+    CREATE DATABASE MORUMOTTO;
+    CREATE USER 'morumotto_user'@'localhost' IDENTIFIED BY 'some password';
+    GRANT ALL ON MORUMOTTO.* TO 'morumotto_user'@'localhost';
     FLUSH PRIVILEGES;
     ```
 
 - Step 2
 
     ```sh
-    git clone https://k2.ipgp.fr/geber/siqaco
-    cd siqaco  
+    git clone https://k2.ipgp.fr/geber/morumotto
+    cd morumotto  
     ./install.sh
     ```
 
@@ -38,8 +38,8 @@ _You will need to confirm some things during installation, don't run away from y
 ##### Get source code
 
 ```sh
-git clone https://k2.ipgp.fr/geber/siqaco
-cd siqaco
+git clone https://github.com/IPGP/morumotto
+cd morumotto
 ```
 
 For the following steps, you must stay in this folder
@@ -71,18 +71,18 @@ For the following steps, you must stay in this folder
     ```
 
 
-2. Install dataselect (version >= 3.20 ) in /siqaco/bin : ([Visit the IRIS GitHub page to install](https://github.com/iris-edu/dataselect "github.com/iris-edu/dataselect"))
+2. Install dataselect (version >= 3.20 ) in /morumotto/bin : ([Visit the IRIS GitHub page to install](https://github.com/iris-edu/dataselect "github.com/iris-edu/dataselect"))
 
 
-3. Install qmerge in /siqaco/bin : ([Download tar file here](http://www.ncedc.org/qug/software/ucb/qmerge.2014.329.tar.gz "ncedc.org/qug/software/ucb/qmerge.2014.329.tar.gz")). Then copy the qmerge executable to /siqaco/bin.
+3. Install qmerge in /morumotto/bin : ([Download tar file here](http://www.ncedc.org/qug/software/ucb/qmerge.2014.329.tar.gz "ncedc.org/qug/software/ucb/qmerge.2014.329.tar.gz")). Then copy the qmerge executable to /morumotto/bin.
 
-4. Install msi in /siqaco/bin : ([Visit the IRIS GitHub page to install](https://github.com/iris-edu/msi "github.com/iris-edu/msi"))
+4. Install msi in /morumotto/bin : ([Visit the IRIS GitHub page to install](https://github.com/iris-edu/msi "github.com/iris-edu/msi"))
 
-5. Install sdrsplit in /siqaco/bin : ([Download tar file here](http://www.ncedc.org/qug/software/ucb/sdrsplit.2013.260.tar.gz)) Then copy the sdrsplit executable to /siqaco/bin.
+5. Install sdrsplit in /morumotto/bin : ([Download tar file here](http://www.ncedc.org/qug/software/ucb/sdrsplit.2013.260.tar.gz)) Then copy the sdrsplit executable to /morumotto/bin.
 
 
 6. Install RabbitMQ (The parallel task are handled by the task queue manager [Celery](http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html#first-steps "First steps with celery").
-Celery requires to install a broker, SiQaCo uses RabbitMQ)  
+Celery requires to install a broker, Morumotto uses RabbitMQ)  
 
     In Ubuntu/Debian :    
 
@@ -99,24 +99,24 @@ Celery requires to install a broker, SiQaCo uses RabbitMQ)
     python --version
     ```  
 
-2. Create the virtual environment (inside the _siqaco_ root directory)
+2. Create the virtual environment (inside the _morumotto_ root directory)
 
     - If your python is < 3.3 :  
 
         ```sh
-        virtualenv siqaco-env -p python3.6
+        virtualenv morumotto-env -p python3.6
         ```  
 
     - If your python is >= 3.4 :  
 
         ```sh
-        python3 -m venv siqaco-env
+        python3 -m venv morumotto-env
         ```
 
 3. Install requirements :  
 
     ```sh
-    source siqaco-env/bin/activate  
+    source morumotto-env/bin/activate  
     pip install numpy # needs to be installed first, doesn't work within requirements
     pip install -r requirements.txt
     ```
@@ -132,7 +132,7 @@ Celery requires to install a broker, SiQaCo uses RabbitMQ)
   - If prompt returns an empty string, you may use the leapsecond list provided here ()
 
     ```sh
-    echo "export LEAPSECONDS='${HOME}/siqaco/leapsecond.list'" >> ${HOME}/.bashrc
+    echo "export LEAPSECONDS='${HOME}/morumotto/leapsecond.list'" >> ${HOME}/.bashrc
     ```
 
     - Be sure to add new leap seconds to your LEAPSECONDS file when they are issued ! To update the leapsecond file : go to http://www.ncedc.org/ftp/pub/programs/leapseconds
@@ -141,7 +141,7 @@ Celery requires to install a broker, SiQaCo uses RabbitMQ)
 
 ##### Initialise your MySQL database
 
-Now, you will have to create a SiQaCo database within MySQL. To do so:
+Now, you will have to create a Morumotto database within MySQL. To do so:
 
 + connect to MySQL as root:  
 
@@ -154,23 +154,23 @@ Now, you will have to create a SiQaCo database within MySQL. To do so:
 
 
     ```sql
-    CREATE DATABASE SIQACO;
-    CREATE USER 'siqaco_user'@'localhost' IDENTIFIED BY 'your_password';
-    GRANT ALL ON SIQACO.* TO 'siqaco_user'@'localhost';
+    CREATE DATABASE MORUMOTTO;
+    CREATE USER 'morumotto_user'@'localhost' IDENTIFIED BY 'your_password';
+    GRANT ALL ON MORUMOTTO.* TO 'morumotto_user'@'localhost';
     FLUSH PRIVILEGES;
     ```
 
-Then add to your custom settings (siqaco/siqaco/custom_settings.py) :
+Then add to your custom settings (morumotto/morumotto/custom_settings.py) :
 
 ```python
 DATABASE_ENGINE = 'django.db.backends.mysql'
-DATABASE_NAME = 'SIQACO'
-DATABASE_USER_NAME = 'siqaco_user'
+DATABASE_NAME = 'MORUMOTTO'
+DATABASE_USER_NAME = 'morumotto_user'
 DATABASE_PASSWORD = 'your_password'
 DATABASE_HOST = 'your_host' #defaults to 127.0.0.1 to use local database
 ```  
 
-There is a template in the siqaco/siqaco folder. Just duplicate it and remove the .template at the end of the file name and put your own settings in it. For the Allowed hosts, see below ("Access from another computer in the same network")
+There is a template in the /morumotto/siqaco folder. Just duplicate it and remove the .template at the end of the file name and put your own settings in it. For the Allowed hosts, see below ("Access from another computer in the same network")
 
 
 _Note: you can change the database, user and password at your convinience, but they must be the same in the database and in the custom settings file_
@@ -178,9 +178,9 @@ _Note: you can change the database, user and password at your convinience, but t
 If you want to use another RDBMS (PostGreSQL for example), please check the [Django documentation](https://docs.djangoproject.com/en/dev/topics/install/#database-installation "Django Database Installation")
 
 
-##### Bind database tables to SiQaCo objects
+##### Bind database tables to Morumotto objects
 
-+ Inside the _siqaco_ root directory, execute
++ Inside the _morumotto_ root directory, execute
 
     ```sh
     python manage.py migrate  
@@ -191,13 +191,13 @@ If you want to use another RDBMS (PostGreSQL for example), please check the [Dja
 
 ##### Create an admin user :
 
-+ Inside the _siqaco_ directory, execute
++ Inside the _morumotto_ directory, execute
 
     ```sh
     python manage.py createsuperuser
     ```
 
-Fill the required informations. Don't forget it, it will be your administrator user for the SIQACO software
+Fill the required informations. Don't forget it, it will be your administrator user for the MORUMOTTO software
 
 All good, you're ready to go now !
 
@@ -214,7 +214,7 @@ In a terminal, paste the following code (or run is in a script) :
 dir=$(pwd)
 cat <<EOT >> morumotto.conf
 [program:morumotto_celery]
-command = ${dir}/siqaco-env/bin/celery -A siqaco worker -l info
+command = ${dir}/morumotto-env/bin/celery -A morumotto worker -l info
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_celery.log
@@ -225,7 +225,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_flower]
-command = ${dir}/siqaco-env/bin/celery flower -A siqaco --address=127.0.0.1 --port=5555
+command = ${dir}/morumotto-env/bin/celery flower -A morumotto --address=127.0.0.1 --port=5555
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_flower.log
@@ -236,7 +236,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_runserver]
-command = ${dir}/siqaco-env/bin/python manage.py runserver 0.0.0.0:8000
+command = ${dir}/morumotto-env/bin/python manage.py runserver 0.0.0.0:8000
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_runserver.log
@@ -265,12 +265,12 @@ Create a file named morumotto.conf, and paste the following text inside :
 <details>
 <summary>Click to display text</summary>
 
-**WARNING : you must change ${dir} with your siqaco directory and ${USER} with your user name**
+**WARNING : you must change ${dir} with your morumotto directory and ${USER} with your user name**
 
 _morumotto.conf_
 ```sh
 [program:morumotto_celery]
-command = ${dir}/siqaco-env/bin/celery -A siqaco worker -l info
+command = ${dir}/morumotto-env/bin/celery -A siqaco worker -l info
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_celery.log
@@ -281,7 +281,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_flower]
-command = ${dir}/siqaco-env/bin/celery flower -A siqaco --address=127.0.0.1 --port=5555
+command = ${dir}/morumotto-env/bin/celery flower -A siqaco --address=127.0.0.1 --port=5555
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_flower.log
@@ -292,7 +292,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_runserver]
-command = ${dir}/siqaco-env/bin/python manage.py runserver 0.0.0.0:8000
+command = ${dir}/morumotto-env/bin/python manage.py runserver 0.0.0.0:8000
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_runserver.log
@@ -343,16 +343,16 @@ morumotto:morumotto_runserver    RUNNING   pid 3938, uptime 0:38:21
 
 ##### Access from another computer in the same network :
 
-+ add the server's IP (1.2.3.4 for example) where SIQACO is located to the ALLOWED_HOST in siqaco/siqaco/custom_settings.py
++ add the server's IP (1.2.3.4 for example) where MORUMOTTO is located to the ALLOWED_HOST in morumotto/siqaco/custom_settings.py
 
 Then in a terminal, enter
 
 ```sh
-source siqaco-env/bin/activate  
+source morumotto-env/bin/activate  
 python manage.py runserver 0.0.0.0:8080
 ```
 
-Note that you have changed the port used by SIQACO from 8000 (default) to 8080
+Note that you have changed the port used by MORUMOTTO from 8000 (default) to 8080
 
 Then from any computer in the network, visit the following URL:
 
@@ -366,11 +366,11 @@ _Note : this is only for development_
 In a terminal enter :  
 
 ```sh
-source siqaco-env/bin/activate  
+source morumotto-env/bin/activate  
 python manage.py runserver
 ```
 
 
 ## Read the docs
 
-[user_guide.pdf](https://k2.ipgp.fr/geber/siqaco/raw/master/docs/user_guide.pdf?inline=false)
+[user_guide.pdf](https://github.com/IPGP/morumotto/raw/master/docs/user_guide.pdf)
