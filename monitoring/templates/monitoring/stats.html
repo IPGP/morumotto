@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+{% load static %}
+{% load timestamp_to_time %}
+<html>
+  <head>
+      <title>Morumotto</title>
+      {% include "home/headers/datatable.html" %}
+  </head>
+  <body>
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <li class="breadcrumb-item"><a href="/monitoring/netgaps">Networks</a></li>
+        {% with stats=stats_list|first %}
+          <li class="breadcrumb-item"><a href="/monitoring/gaps/{{stats.net}}/{{stats.sta}}/{{stats.loc}}/{{stats.comp}}">Stations</a></li>
+          <li class="breadcrumb-item active" aria-current="page">{{stats.net}}.{{stats.sta}}.{{stats.loc}}.{{stats.chan}}</li>
+        {% endwith %}
+      </ol>
+    </nav>
+    <div class="container-fluid">
+      <center>
+        <!-- {% with stats=stats_list|first %}
+          <a href="/monitoring/gaps/{{stats.net}}/{{stats.sta}}/{{stats.loc}}/{{stats.comp}}" class="btn btn-outline-primary" role="button" id="sta_net"><i class="fa fa-chevron-left"></i> Back to stations</a>
+        {% endwith %} -->
+        <button class="btn btn-outline-secondary" role="button" id="PreviousYear" ><i class="fa fa-chevron-left"></i> Prev year</button>
+        <button class="btn btn-outline-secondary" role="button" id="NextYear">Next year <i class="fa fa-chevron-right"></i></button>
+        <div class="btn-group">
+          <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown">
+            Go to year
+          </button>
+          <ul class="dropdown-menu">
+            {% for year in year_list %}
+              <li class="dropdown-item" id="year{{year}}"><a href="javascript:;">{{year}}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </center>
+
+      <br>
+      <table id='table_id' class="display"  style="width:100%">
+        <thead>
+          <tr>
+            <th align="right">net</th>
+            <th align="right">sta</th>
+            <th align="right">loc</th>
+            <th align="right">chan</th>
+            <th>stream start</th>
+            <th>stream end</th>
+            <th align="left">ngaps </th>
+            <th align="left">gaps_span (minutes)</th>
+            <th align="left">noverlaps</th>
+            <th align="left">overlaps_span (minutes)</th>
+            <th align="left">modif_time</th>
+            <th align="left">path</th>
+          </tr>
+        </thead>
+        <tbody>
+          {%for stats in stats_list %}
+            <tr>
+              <td>{{stats.net}}</td>
+              <td>{{stats.sta}}</td>
+              <td>{{stats.loc}}</td>
+              <td>{{stats.chan}}</td>
+              <td>{{stats.starttime|date:"Y-m-d H:i:s"}}</td>
+              <td>{{stats.endtime|date:"Y-m-d H:i:s"}}</td>
+              <td align="right">{{stats.ngaps}}</td>
+              <td align="right">{{stats.gap_span|floatformat:-5}}</td>
+              <td align="right">{{stats.noverlaps}}</td>
+              <td align="right">{{stats.overlap_span|floatformat:-5}}</td>
+              <td>{{stats.modif_time}} </td>
+              <!-- <td>{{stats.timestamp|timestamp_to_time|date:"Y-m-d H:i:s"}}</td> -->
+              <td><a href="/monitoring/plot/{{stats.day|date:'Y'}}/{{stats.net}}.{{stats.sta}}.{{stats.loc}}.{{stats.chan}}.D.{{stats.day|date:'z'}}"</a>{{stats.datafile.filename}}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+      <br>
+
+      <!-- <div>
+        <em><small> (*) Gaps and overlaps span are in minutes, if total span is under 60 seconds,
+        displayed span is in seconds.</small></em>
+      </div> -->
+    </div>
+    {% include "home/footer.html" %}
+    <script>
+
+      function getUrlParameter(sParam) {
+          var sPageURL = window.location.search.substring(1);
+          var sURLVariables = sPageURL.split('&');
+          for (var i = 0; i < sURLVariables.length; i++) {
+              var sParameterName = sURLVariables[i].split('=');
+              if (sParameterName[0] == sParam) {
+                  return sParameterName[1];
+              }
+          }
+      }
+
+      function updateURL(year) {
+          var pageURL = window.location.href.split("?")[0];
+          newPageURL = pageURL + "?year=" + year;
+          window.history.pushState("", "", newPageURL);
+      }
+
+      function updateHREFS(year) {
+          $("a[id^=sta_]").each(function(){
+              href = $(this).attr("href");
+              if (href.indexOf("javascript") == -1) {
+                  $(this).attr("href", href.split("?")[0] + "?year=" + year);
+              }
+          });
+      }
+
+
+      var year = getUrlParameter("year");
+      if (typeof year === "undefined") {
+          year = {{ year_list|last }};
+      } else {
+          year = parseInt(year);
+      };
+      updateURL(year);
+      updateHREFS(year);
+
+
+
+      $(document).ready( function () {
+          $("#monitBtn").addClass("active");
+          $("#staStatsDd").addClass("active");
+          $("#logDd").attr("href","/admin/logdb/monitoringlog/");
+          $("#adminDd").attr("href","/admin/monitoring/stat/");
+          var table = $('#table_id').DataTable( {
+            scrollY: "40vh",
+            scrollX: "100%",
+            orderCellsTop: true,
+            fixedHeader: true,
+
+            scrollCollapse: true,
+            paging: false,
+
+            "order": [[4,'desc']],
+            "deferRender": true,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+          });
+
+          // search for year on culumn starttime AND endtime
+          // table
+          //   .columns(4).search(year)
+          //   .draw();
+
+          $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+             //search for year on culumn starttime OR endtime
+             if (~data[4].search(year)) return true;
+             if (~data[5].search(year)) return true;
+             return false;
+         })
+         $('#container').css( 'display', 'block' );
+         table.columns.adjust().draw();
+
+
+          $("#PreviousYear").on("click", function(event) {
+              year--;
+              $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                 if (~data[4].search(year)) return true;
+                 if (~data[5].search(year)) return true;
+                 return false;
+              })
+              table.draw();
+              updateURL(year);
+              updateHREFS(year);
+          });
+          $("#NextYear").on("click", function(event) {
+              year++;
+              $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                 if (~data[4].search(year)) return true;
+                 if (~data[5].search(year)) return true;
+                 return false;
+              })
+              table.draw();
+              updateURL(year);
+              updateHREFS(year);
+          });
+
+
+          $("li[id^=year]").each(function(){
+              $(this).on("click", function(event) {
+                  id = $(this).attr("id");
+                  year = id.replace("year", "");
+                  year = parseInt(year);
+                  console.log(year);
+                  $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                     if (~data[4].search(year)) return true;
+                     if (~data[5].search(year)) return true;
+                     return false;
+                  })
+                  table.draw();
+                  updateURL(year);
+                  updateHREFS(year);
+              });
+          });
+      });
+
+    </script>
+  </body>
+</html>

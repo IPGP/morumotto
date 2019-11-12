@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/basics.html" %}
+  </head>
+
+  <body>
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <li class="breadcrumb-item"><a href="/qualitycontrol">Quality Control</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Status</li>
+      </ol>
+    </nav>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-3">
+
+        </div>
+        <div class="col-7 col-lg-6">
+          <h5 class="text-primary">
+            Last update of METADATA :
+          </h5>
+          <h7> {{ last_update.time }} </h7>
+          <br><hr>
+          <h5 class="text-primary">
+            Automatic update of METADATA :
+          </h5>
+
+          {% if crontab_status %}
+            <form method="post">
+              {% csrf_token %}
+              <div class="alert alert-primary" role="alert">
+                Daily update of metadata status : <b>ACTIVE</b>
+                <br><br>
+                {% if user.is_authenticated %}
+                  Stop daily update:
+                  <input type="hidden" name="stop_cron" value="foo">
+                  <a href="#" class="alert-link submit-link">
+                    <i class="far fa-stop-circle"></i>
+                    Disable cronjob
+                  </a>
+                {% else %}
+                  <a href="update_metadata" class="alert-link"> Sign in to access daily metadata update setup</a>
+                {% endif %}
+              </div>
+            </form>
+
+          {% else %}
+            <div class="alert alert-danger" role="alert">
+                Daily update of metadata status : <b>DISABLED</b>
+                <br><br>
+                {% if user.is_authenticated %}
+                  <form method="post">
+                    {% csrf_token %}
+                      Restart daily update:
+                      <input type="hidden" name="start_cron" value="foo">
+                      <a href="#" class="alert-link submit-link">
+                        <i class="far fa-play-circle"></i>
+                        Restart cronjob
+                      </a>
+                  </form>
+                  <br>
+                  <em>Note : If restart doesn't work, please go to:
+                    <a href="update_metadata" class="alert-link">
+                      <i class="fas fa-sync-alt"></i>
+                      Update Metadata
+                    </a>
+                  </em>
+                {% else %}
+                  <a href="update_metadata" class="alert-link"> Sign in to update metadata</a>
+                {% endif %}
+            </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+    {% include "home/footer.html" %}
+    <script>
+      $('form .submit-link').on({
+          click: function (event) {
+              event.preventDefault();
+              $(this).closest('form').submit();
+          }
+      });
+      $(document).ready( function () {
+
+        $("#qcBtn").addClass("active");
+        $("#statusDd").addClass("active");
+        $("#logDd").attr("href","/admin/logdb/qclog/")
+      });
+    </script>
+  </body>
+
+</html>

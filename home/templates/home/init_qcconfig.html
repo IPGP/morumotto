@@ -1,0 +1,24 @@
+<form method="post">
+  {% csrf_token %}
+  <div class="modal-body ">
+    <div class="alert alert-success" role="alert">
+       <h4 class="alert-heading">Configure Quality Control</h4>
+    </div>
+    <hr>
+    <span style="font-size: 1em" class="text-secondary">
+        {% for field in qcconfig_form %}
+          <div class="submit-link-row">{{ field.label_tag }} {{ field }}</div>
+          {% if qcconfig_form.errors %}
+            {% for error in field.errors %}
+              <p class="error-message" style="color:red">
+                <strong>{{ error|escape }}</strong>
+              </p>
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+    </div>
+    <div class="modal-footer">
+      <input type="submit" class="btn btn-primary" name="qcconfig_prev" value="&#8592 Prev">
+      <input type="submit" class="btn btn-primary" name="qcconfig_next" value="Next &#8594">
+    </div>
+  </form>

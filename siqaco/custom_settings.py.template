@@ -1,0 +1,6 @@
+DATABASE_ENGINE = 'django.db.backends.mysql'
+DATABASE_NAME = 'db_name'
+DATABASE_USER_NAME = 'user'
+DATABASE_PASSWORD = 'pwd'
+DATABASE_HOST = '127.0.0.1'
+CUSTOM_HOSTS = ["1.2.3.4",""]

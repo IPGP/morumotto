@@ -1,0 +1,14 @@
+A. Lemarchand
+
+redirection errue sur sortie standart sur: Check-list_Chan.sh, Check_SDS.sh , Check_dataless.sh
+verification que les fichiers integres dans la livraion correspondent bien au format attendu dans une arborescence SDS dans Make_Final_Delivery.sh
+script plus verbeux (repertoire scanne) :dataless_vs_SDS.sh
+
+
+--This line, and those below, will be ignored--
+
+M    Check-list_Chan.sh
+M    Check_SDS.sh
+M    Check_dataless.sh
+M    Make_Final_Delivery.sh
+M    dataless_vs_SDS.sh

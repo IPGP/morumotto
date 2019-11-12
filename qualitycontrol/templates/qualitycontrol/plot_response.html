@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/basics.html" %}
+  </head>
+
+  <body>
+
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <li class="breadcrumb-item"><a href="/qualitycontrol">Quality Control</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Plot Responses</li>
+      </ol>
+    </nav>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-3">
+          <div class="float-right">
+            <form method="post">
+              {% csrf_token%}
+              {% for field in form %}
+                <div class="submit-link-row">
+                  <h6><b>{{ field.label_tag }}</b></h6>
+                  {{ field }}
+                  <br>
+                </div>
+                {% if form.errors %}
+                  {% for error in field.errors %}
+                    <p class="error-message" style="color:red">
+                      <strong>{{ error|escape }}</strong>
+                    </p>
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+              <br>
+              <input type="submit" class="btn btn-sm btn-primary"  name="plot_resp" value="Plot Response">
+            </form>
+          </div>
+        </div>
+        <div class="col-8 col-lg-7">
+          {% if figure is True %}
+            <h5 class="text-primary">
+              Response :
+            </h5>
+            <br>
+            <img src="{% static plotdir|add:filename_id|add:'.resp.'|add:extension %}" id="plot" />
+            <br>
+            <b class="text-secondary">Station: </b>
+            <em class ="text-secondary">{{ metadata.nslc }}</em>
+          {% elif figure is not False %}
+            <div class="alert alert-danger" role="alert">
+              <p><i class="fa fa-exclamation-circle"></i>
+                Could not compute plot from metadata :
+                <br>
+                ERROR : {{ figure }}
+              </p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+    {% include "home/footer.html" %}
+    <script>
+      $(document).ready( function () {
+
+        $("#qcBtn").addClass("active");
+        $("#responseDd").addClass("active");
+        $("#logDd").attr("href","/admin/logdb/qclog/")
+      });
+    </script>
+  </body>
+</html>

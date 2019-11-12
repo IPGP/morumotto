@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+{% load static %}
+{% load git_ver %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/basics.html" %}
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
+    <link rel="stylesheet" type="text/css" href="{% static 'home/css/home.css' %}">
+  </head>
+  <body class="background_logo">
+    {% include "home/header.html" %}
+
+    <div class="container">
+      <br>
+      License :
+      <br><br>
+      <pre>
+        Copyright (C) 2019 RESIF/IPGP
+
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
+
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        <a href="https://opensource.org/licenses/GPL-3.0">GNU General Public License</a> for more details.
+
+        This program is part of 'Projet SiQaCo'.
+        It has been financed by <a href="https://www.resif.fr/">RESIF</a> (Réseau sismologique & géodésique
+        français)
+      </pre>
+      Current version : {% git_ver %}
+      <br><br>
+      Source code : <a href="https://github.com/IPGP/siqaco">Github <i class="fab fa-github"></i></a>
+      <br><br>
+
+      People : <a href="http://www.ipgp.fr/fr/geber-olivier">Olivier Geber</a>,
+      <a href="http://www.ipgp.fr/fr/pardo-constanza">Constanza Pardo</a>,
+      <a href="http://www.ipgp.fr/fr/saurel-jean-marie">Jean-Marie Saurel</a>,
+      <a href="http://www.ipgp.fr/fr/lemarchand-arnaud">Arnaud Lemarchand</a>,
+      <a href="http://www.ipgp.fr/fr/kowalski-philippe">Philippe Kowalski</a>,
+      <a href="http://www.ipgp.fr/fr/leroy-nicolas">Nicolas Leroy</a>,
+      <a href="http://www.ipgp.fr/fr/aissaoui-el-madani">El-Madani Aissaoui</a>,
+      <a href="http://www.ipgp.fr/fr/satriano-claudio">Claudio Satriano</a>
+      <br><br>
+
+      <p>
+        Morumotto ?
+      </p>
+      <p class="text-secondary">
+        モルモット (Mo-ru-mo-tto) is the japanese for Guinea Pig. Guinea Pigs natural diet is grass, but they can also feed on seeds
+        providing that the seed respects a certain amount of requirements (not too small, not too hard...) to avoid choking hazard.<sup>[1]</sup>
+        This software gathers seeds as well (as miniseed temporal traces, not actual seeds) and performs several quality control checks
+        on it before storing them in a dedicated archive. This name is also close to the spanish words <em>terremoto</em> and <em>maremoto</em>
+        which are the main purpose of having clean and continuous miniseed data, in order to study those phenomenons.<br>
+        And, last but not least, it uses several frameworks named after natural things, like RabbitMQ, Flower and so on, so we thought about
+        giving it a name to live in this environment, trying to avoid eating wild Celery which could be deadly for it <sup>[1]</sup> (or create bugs in
+        our task manager), or being swallowed by a mean Python.
+      </p>
+
+      <small>[1] Few informations about guinea pigs were gathered here :
+        <a href="https://smallpetselect.com/can-guinea-pigs-eat-seeds/">smallpetselect.com/can-guinea-pigs-eat-seeds</a>
+      </small>
+    </div>
+
+    {% include "home/footer.html" %}
+
+    <script type="text/javascript">
+
+
+      $(document).ready(function() {
+        $("#aboutBtn").addClass("active");
+      });
+
+    </script>
+  </body>
+</html>

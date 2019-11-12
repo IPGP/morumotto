@@ -1,0 +1,42 @@
+{% load static %}
+<div class="modal fade" tabindex="-1" role="dialog" id="initModal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-primary">
+          <i class="fas fa-pencil-alt"></i>
+          Morumotto initialisation
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      {% if modal == "welcome" %}
+        {% include "home/init_welcome.html" %}
+
+      {% elif modal == "networks" %}
+        {% include "home/init_networks.html" %}
+
+      {% elif modal == "nslc" %}
+        {% include "home/init_nslc.html" %}
+
+      {% elif modal == "source" %}
+        {% include "home/init_source.html" %}
+
+      {% elif modal == "config" %}
+        {% include "home/init_config.html" %}
+
+      {% elif modal == "monitoring" %}
+        {% include "home/init_monitoring.html" %}
+
+      {% elif modal == "qcconfig" %}
+        {% include "home/init_qcconfig.html" %}
+
+      {% elif modal == "finish" %}
+        {% include "home/init_finish.html" %}
+
+      {% endif %}
+    </div>
+  </div>
+</div>

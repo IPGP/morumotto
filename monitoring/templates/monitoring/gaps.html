@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+{% load static %}
+{% load pt2underscore pt2slashes timestamp_to_time %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/calendar.html" %}
+  </head>
+  <body>
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <li class="breadcrumb-item"><a href="/monitoring/netgaps">Networks</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Stations Gaps</li>
+      </ol>
+    </nav>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg-1 hidden-md "></div>
+        <div class="col-lg-2 col-md-3" id="left">
+            <ul class="nav nav-tabs" role="tablist">
+              {% for comp in comp_list %}
+                {% if comp not in others_list %}
+                  {% if comp == comp_id %}
+                      <li class="nav-item">
+                        <a class="nav-link active" href="{{'#tab_'|add:comp}}" data-toggle="tab">{{comp}}</a>
+                      </li>
+                  {% else %}
+                      <li class="nav-item">
+                        <a class="nav-link" href="{{'#tab_'|add:comp}}" data-toggle="tab">{{comp}}</a>
+                      </li>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+
+              {% if others_list %}
+                {% if comp_id in others_list %}
+                    <li class="nav-item">
+                      <a class="nav-link active" href="#tab_Others" data-toggle="tab">Others</a>
+                    </li>
+                {% else %}
+                  <li class="nav-item">
+                    <a class="nav-link" href="#tab_Others" data-toggle="tab">Others</a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            </ul>
+
+            <div class="tab-content">
+              {% for comp in comp_list %}
+                {% if comp not in others_list%}
+                  <div class="tab-pane fade show " id="{{'tab_'|add:comp}}">
+                    <div class="list-group">
+                      {% for compname in comp_paths %}
+                        {% if comp == comp_id and comp in compname and network_id in compname and station_id in compname and location_id in compname %}
+                          <a class="list-group-item btn-outline-primary active" style="border: none" id="sta_" href="/monitoring/gaps/{{compname|pt2slashes}}">{{compname}}</a>
+                        {% elif network_id in compname and comp in compname %}
+                          <a class="list-group-item btn-outline-secondary" style="border: none" id="sta_" href="/monitoring/gaps/{{compname|pt2slashes}}">{{compname}}</a>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+              {% endfor %}
+
+              {% if others_list %}
+                <div class="tab-pane fade" id="tab_Others">
+                  <div class="list-group">
+                    {% for compname in comp_paths %}
+                      {% for comp in others_list %}
+                        {% if comp == comp_id and comp in compname and network_id in compname and station_id in compname and location_id in compname %}
+                          <a class="list-group-item btn-outline-primary active" style="border: none" id="sta_" href="/monitoring/gaps/{{compname|pt2slashes}}">{{compname}}</a>
+                        {% elif network_id in compname and comp in compname %}
+                          <a class="list-group-item btn-outline-secondary" style="border: none" id="sta_" href="/monitoring/gaps/{{compname|pt2slashes}}">{{compname}}</a>
+                        {% endif %}
+                      {% endfor %}
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+        <div class="col-9 col-xl-6 ">
+            <div class="container">
+                <button id="PreviousYear" class="btn btn-outline-secondary"><i class="fa fa-chevron-left"></i> Prev year</button>
+                <button id="NextYear" class="btn btn-outline-secondary">Next year <i class="fa fa-chevron-right"></i></button>
+
+                <div class="btn-group">
+                  <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown">
+                      Go to year
+                  </button>
+                  <ul class="dropdown-menu">
+                    {% for year in year_list %}
+                      <li class="dropdown-item" id="year{{year}}"><a href="javascript:;">{{year}}</a></li>
+                    {% endfor %}
+                  </ul>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" id="sta_gaps" aria-disabled="true">Gaps</button>
+                    <a href="/monitoring/overlaps/{{network_id}}/{{station_id}}/{{location_id}}/{{comp_id}}" class="btn btn-outline-secondary" type=button id="sta_overlaps">Overlaps</a>
+                </div>
+                <a href="/monitoring/availability/{{network_id}}/{{station_id}}/{{location_id}}/{{comp_id}}" class="btn btn-outline-secondary" type=button id="sta_avail">Availability</a>
+            </div>
+            <br><br>
+            <ul class="nav">
+              <div class="panel">
+                {% for chan in chan_list %}
+                  {% with fullname=network_id|add:"."|add:station_id|add:"."|add:location_id|add:"."|add:chan %}
+                    {% if fullname in chan_paths and chan|slice:":2" == comp_id %}
+                      {% with heatmap="cal-heatmap-"|add:network_id|add:"_"|add:station_id|add:"_"|add:location_id|add:"_"|add:chan %}
+                        <h8><a id="sta_" href="/monitoring/stats/{{network_id}}/{{station_id}}/{{location_id}}/{{chan}}">{{fullname|add:".D"}}</a></h8>
+                        <div id="{{ heatmap }}"></div><br>
+                      {% endwith %}
+                    {% elif comp_id == 'other' and fullname in chan_paths and chan|slice:":2" not in comp_list %}
+                      {% with heatmap="cal-heatmap-"|add:network_id|add:"_"|add:station_id|add:"_"|add:location_id|add:"_"|add:chan %}
+                        <h8><a id="sta_" href="/monitoring/stats/{{network_id}}/{{station_id}}/{{location_id}}/{{chan}}">{{fullname|add:".D"}}</a></h8>
+                        <div id="{{ heatmap }}"></div><br>
+                      {% endwith %}
+                    {% endif %}
+                  {% endwith %}
+                {% endfor %}
+              </div>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    {% include "home/footer.html" %}
+
+    {% for key, value in statistics.items %}
+        {% if station_id in key and comp_id in key %}
+            {{ value|json_script:key }}
+        {% endif %}
+        {% if station_id in key and comp_id == 'other' %}
+            {{ value|json_script:key }}
+        {% endif %}
+    {% endfor %}
+
+    <script type="text/javascript">
+      $(document).ready( function () {
+        // ${"#{{'tab_'|add:comp_id}}"}.addClass("active")
+        {% if comp_id in others_list %}
+          $("#{{'tab_Others'}}").addClass("active");
+        {% else %}
+          $("#{{'tab_'|add:comp_id}}").addClass("active");
+        {% endif %}
+        $("#monitBtn").addClass("active");
+        $("#staGapsDd").addClass("active");
+        $("#logDd").attr("href","/admin/logdb/monitoringlog/");
+        $("#adminDd").attr("href","/admin/monitoring/stat/");
+      });
+
+      function getUrlParameter(sParam) {
+          var sPageURL = window.location.search.substring(1);
+          var sURLVariables = sPageURL.split('&');
+          for (var i = 0; i < sURLVariables.length; i++) {
+              var sParameterName = sURLVariables[i].split('=');
+              if (sParameterName[0] == sParam) {
+                  return sParameterName[1];
+              }
+          }
+      }
+
+      function updateURL(year) {
+          var pageURL = window.location.href.split("?")[0];
+          newPageURL = pageURL + "?year=" + year;
+          window.history.pushState("", "", newPageURL);
+      }
+
+      function updateHREFS(year) {
+          $("a[id^=sta_]").each(function(){
+              href = $(this).attr("href");
+              if (href.indexOf("javascript") == -1) {
+                  $(this).attr("href", href.split("?")[0] + "?year=" + year);
+              }
+          });
+      }
+
+
+      var year = getUrlParameter("year");
+      if (typeof year === "undefined") {
+          year = {{ year_list|last }};
+      } else {
+          year = parseInt(year);
+
+      };
+      updateURL(year);
+      updateHREFS(year);
+
+
+
+      var common_args = {
+          domain: "month",
+          start: new Date(year, 0, 1),
+          range: 12,
+
+          legend: [15, 45, 90],
+          legendColors: {
+            // max: "#dc3545",
+            // overflow: "#6f42c1",
+            // base: "#F5F5F6",
+            // empty: "#4CC417",
+            // min: "#F0E68C"
+            max: "#6610f2",
+            overflow: "#e83e8c",
+            base: "#F5F5F6",
+            empty: "#20c997",
+            min: "#C3C3E4"
+          },
+
+          itemName: ["minute", "minutes"],
+          legendTitleFormat: {
+              lower: "Less than {min} {name} of daily gap span",
+              inner: "Between {down} and {up} {name} of daily gap span",
+              upper: "More than {max} {name} of daily gap span"
+          },
+
+          domainLabelFormat: "%Y-%m",
+          subDomainTitleFormat: {
+              empty: "No data for {date}",
+              filled: "{count} {name} of gap span on {date}"
+          },
+          subDomainDateFormat: "%Y-%m-%d",
+          tooltip: true
+      };
+
+      // Cal Heatmap displays data in the local date system, but we need it
+      // to display data in UTC, hence the following function
+      // See : https://github.com/wa0x6e/cal-heatmap/issues/126
+      var display_data_as_utc = function (data) {
+        var offset = new Date().getTimezoneOffset() * 60;
+        var results = {};
+        for (var timestamp in data) {
+          var commitCount = data[timestamp];
+          timestamp = parseInt(timestamp, 10);
+          results[timestamp + offset] = commitCount;
+        };
+        return results;
+      };
+
+      var cals = [];
+
+      {% for sta in chan_paths %}
+        {% if station_id in sta and location_id in sta and comp_id == sta|slice:"-3:-1" %}
+          {% with id="ref."|add:sta|pt2underscore heatmap="#cal-heatmap-"|add:sta|pt2underscore %}
+            var args = {
+                itemSelector: "{{ heatmap }}",
+                data: JSON.parse(document.getElementById("{{ id }}").textContent),
+                afterLoadData: display_data_as_utc,
+                afterLoad: function(){
+                    var id = "{{ heatmap }}";
+                    var $legend = $(id);
+                    $legend.append('<svg height="25"><rect class="day" y="2" x="12" width="10" height="10" fill-opacity="1" fill="#F5F5F6"><title>No Data</title></rect><rect class="day" y="2" x="24" width="10" height="10" fill-opacity="1" fill="#20c997"><title>Day OK</title></rect></svg>');
+                }
+            };
+            // console.log(args)
+            jQuery.extend(args, common_args);
+            var cal = new CalHeatMap();
+            cal.init(args);
+            cals.push(cal);
+          {% endwith %}
+        {% elif station_id in sta and location_id in sta and comp_id == 'other' and sta|slice:"-3:-1" not in comp_list %}
+          {% with id="ref."|add:sta|pt2underscore heatmap="#cal-heatmap-"|add:sta|pt2underscore %}
+              var args = {
+                  itemSelector: "{{ heatmap }}",
+                  data: JSON.parse(document.getElementById("{{ id }}").textContent),
+                  afterLoadData: display_data_as_utc
+              };
+              jQuery.extend(args, common_args);
+              var cal = new CalHeatMap();
+              cal.init(args);
+              cals.push(cal);
+          {% endwith %}
+        {% endif %}
+      {% endfor %}
+
+      $("#PreviousYear").on("click", function(event) {
+          for (var i in cals) {
+              cals[i].previous(12);
+              // console.log(cals[i]);
+          }
+          year--;
+          updateURL(year);
+          updateHREFS(year);
+      });
+      $("#NextYear").on("click", function(event) {
+          for (var i in cals) {
+              cals[i].next(12);
+          }
+          year++;
+          updateURL(year);
+          updateHREFS(year);
+      });
+
+
+      $("li[id^=year]").each(function(){
+          $(this).on("click", function(event) {
+              id = $(this).attr("id");
+              year = id.replace("year", "");
+              year = parseInt(year);
+              // console.log(year);
+              for (var i in cals) {
+                  cals[i].jumpTo(new Date(year, 0), true);
+              }
+              updateURL(year);
+              updateHREFS(year);
+          });
+      });
+    </script>
+  </body>
+</html>

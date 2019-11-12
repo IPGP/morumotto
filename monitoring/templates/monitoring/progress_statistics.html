@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <script src="{% static 'celery_progress/celery_progress.js' %}"></script>
+</head>
+<body>
+
+  <div class='progress'>
+    <div id='progress-bar' role='progressbar'>&nbsp;</div>
+  </div>
+  <div id="progress-bar-message">Reading directory...</div>
+
+<script>
+
+  function customProgress(progressBarElement, progressBarMessageElement, progress) {
+    progressBarElement.style.backgroundColor = '#68a9ef';
+    progressBarElement.style.width = progress.percent + "%";
+    progressBarMessageElement.innerHTML = 'Computing statistics (' + progress.current + '/' + progress.total +' files processed)';
+  }
+
+  function customSuccess(progressBarElement, progressBarMessageElement) {
+      progressBarElement.style.backgroundColor = '#76ce60';
+      progressBarMessageElement.innerHTML = "All Statistics updated !";
+  }
+
+  var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
+  $(function () {
+    CeleryProgressBar.initProgressBar(progressUrl, {
+        onProgress: customProgress,
+        onSuccess: customSuccess,
+    });
+  });
+</script>
+
+</body>
+</html>

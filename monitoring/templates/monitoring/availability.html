@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+{% load static %}
+{% load pt2underscore pt2slashes timestamp_to_time datetime_to_str %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/visavail.html" %}
+  </head>
+  <body>
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <li class="breadcrumb-item"><a href="/monitoring/netgaps">Networks</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Data Availability</li>
+      </ol>
+    </nav>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg-1 hidden-md "></div>
+          <div class="col-lg-2 col-md-3" id="left">
+              <ul class="nav nav-tabs" role="tablist">
+                {% for comp in comp_list %}
+                  {% if comp not in others_list %}
+                    {% if comp == comp_id %}
+                        <li class="nav-item">
+                          <a class="nav-link active" href="{{'#tab_'|add:comp}}" data-toggle="tab">{{comp}}</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                          <a class="nav-link" href="{{'#tab_'|add:comp}}" data-toggle="tab">{{comp}}</a>
+                        </li>
+                    {% endif %}
+                  {% endif%}
+                {% endfor %}
+                {% if others_list %}
+                  {% if comp_id in others_list %}
+                      <li class="nav-item">
+                        <a class="nav-link active" href="#tab_Others" data-toggle="tab">Others</a>
+                      </li>
+                  {% else %}
+                    <li class="nav-item">
+                      <a class="nav-link" href="#tab_Others" data-toggle="tab">Others</a>
+                    </li>
+                  {% endif %}
+                {% endif %}
+              </ul>
+
+              <div class="tab-content">
+                {% for comp in comp_list %}
+                  {% if comp not in others_list%}
+                    <div class="tab-pane" id="{{'tab_'|add:comp}}">
+                      <div class="list-group">
+                        {% for compname in comp_paths %}
+                          {% if comp == comp_id and comp in compname and network_id in compname and station_id in compname and location_id in compname %}
+                            <a class="list-group-item btn-outline-primary active" style="border: none" id="sta_" href="/monitoring/availability/{{compname|pt2slashes}}">{{compname}}</a>
+                          {% elif network_id in compname and comp in compname %}
+                            <a class="list-group-item btn-outline-secondary" style="border: none" id="sta_" href="/monitoring/availability/{{compname|pt2slashes}}">{{compname}}</a>
+                          {% endif %}
+                        {% endfor %}
+                      </div>
+                    </div>
+                  {% endif %}
+                {% endfor %}
+
+                {% if others_list %}
+                  <div class="tab-pane" id="tab_Others">
+                    <div class="list-group">
+                      {% for compname in comp_paths %}
+                        {% for comp in others_list %}
+                          {% if comp == comp_id and comp in compname and network_id in compname and station_id in compname and location_id in compname %}
+                            <a class="list-group-item btn-outline-primary active" style="border: none" id="sta_" href="/monitoring/availability/{{compname|pt2slashes}}">{{compname}}</a>
+                          {% elif network_id in compname and comp in compname %}
+                            <a class="list-group-item btn-outline-secondary" style="border: none" id="sta_" href="/monitoring/availability/{{compname|pt2slashes}}">{{compname}}</a>
+                          {% endif %}
+                        {% endfor %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+          <div class="col-9 col-xl-6">
+            <div class="container">
+              <button id="PreviousYear" class="btn btn-outline-secondary"><i class="fa fa-chevron-left"></i> Prev year</button>
+              <button id="NextYear" class="btn btn-outline-secondary">Next year <i class="fa fa-chevron-right"></i></button>
+
+              <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown">
+                    Go to year
+                </button>
+                <ul class="dropdown-menu">
+                  {% for year in year_list %}
+                    <li class="dropdown-item" id="year{{year}}"><a href="javascript:;">{{year}}</a></li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div class="btn-group">
+                  <a href="/monitoring/gaps/{{network_id}}/{{station_id}}/{{location_id}}/{{comp_id}}" class="btn btn-outline-secondary" type=button id="sta_gaps">Gaps</a>
+                  <a href="/monitoring/overlaps/{{network_id}}/{{station_id}}/{{location_id}}/{{comp_id}}" class="btn btn-outline-secondary" type=button id="sta_overlaps">Overlaps</a>
+              </div>
+              <button type="button" class="btn btn-secondary" id="sta_avail" aria-disabled="true">Availability</button>
+            </div>
+            <br>
+
+            <div align=right>
+              <i class="text-primary fas fa-info-circle" title="You can zoom on data by scrolling or double clic"></i>
+            </div>
+            <ul class="nav">
+              <br>
+              {% for nslc in chan_list %}
+                  {% with visavail_id="visavail_"|add:nslc.code|pt2underscore %}
+                  <!-- <button type="button" class="btn btn-secondary" disabled>{{nslc}}</button> -->
+                  <h8><a href="/monitoring/stats/{{nslc.code|pt2slashes}}">{{nslc.code|add:".D"}}</a></h8>
+                  <div class="visavail" style="margin: 0 auto; width: 100%;padding: 10px" id="container_{{visavail_id}}">
+                    <p id="{{ visavail_id }}"></p>
+                  </div>
+                  {% endwith %}
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    {% include "home/footer.html" %}
+    <script type="text/javascript">
+
+      $(document).ready( function () {
+
+        {% if comp_id in others_list %}
+          $("#{{'tab_Others'}}").addClass("active");
+        {% else %}
+          $("#{{'tab_'|add:comp_id}}").addClass("active");
+        {% endif %}
+        $("#monitBtn").addClass("active");
+        $("#availabilityDd").addClass("active");
+        $("#logDd").attr("href","/admin/logdb/monitoringlog/");
+        $("#adminDd").attr("href","/admin/seismicarchive/sourceavailability/");
+        draw_avail()
+      });
+
+      if (navigator.userAgent.indexOf("Firefox") != -1) {
+         var browser_display = "overlay"
+         var browser_spacing = 20
+      }
+      else {
+         var browser_display = "top"
+         var browser_spacing = 0
+      }
+
+
+
+      function getUrlParameter(sParam) {
+          var sPageURL = window.location.search.substring(1);
+          var sURLVariables = sPageURL.split('&');
+          for (var i = 0; i < sURLVariables.length; i++) {
+              var sParameterName = sURLVariables[i].split('=');
+              if (sParameterName[0] == sParam) {
+                  return sParameterName[1];
+              }
+          }
+      }
+
+      function updateURL(year) {
+          var pageURL = window.location.href.split("?")[0];
+          newPageURL = pageURL + "?year=" + year;
+          window.history.pushState("", "", newPageURL);
+      }
+
+      function updateHREFS(year) {
+          $("a[id^=sta_]").each(function(){
+              href = $(this).attr("href");
+              if (href.indexOf("javascript") == -1) {
+                  $(this).attr("href", href.split("?")[0] + "?year=" + year);
+              }
+          });
+      }
+
+
+      var year = getUrlParameter("year");
+      if (typeof year === "undefined") {
+          year = {{ year_list|last }};
+      } else {
+          year = parseInt(year);
+
+      };
+      updateURL(year);
+      updateHREFS(year);
+
+
+    function draw_avail() {
+      {% for nslc in chan_list %}
+        {% with visavail_id="visavail_"|add:nslc.code|pt2underscore %}
+          $( {{ visavail_id }}).text('');
+          var dataset_{{nslc.id}} = [
+              {% for source in source_list %}
+                {% if nslc in source.nslc.all %}
+                  {
+                    "measure": "{{ source.name }}",
+                    "interval_s": 365 * 24 * 60 * 60,
+                    "data": [
+                              {% for obj in availability %}
+                               {% if obj.source == source and obj.nslc == nslc %}
+                                ["{{ obj.starttime|datetime_to_str }}", 1, "{{ obj.endtime|datetime_to_str }}"],
+                               {% endif %}
+                               {% endfor %}
+                            ]
+                  },
+               {% endif %}
+             {% endfor %}
+
+             {% if station_gaps %}
+               {
+                 "measure": "Final Archive",
+                 "interval_s": 365 * 24 * 60 * 60,
+                 "data": [
+                           {% for gap in station_gaps %}
+                            {% if gap.nslc == nslc %}
+                             ["{{ gap.starttime|datetime_to_str }}", 0, "{{ gap.endtime|datetime_to_str }}", 1],
+                            {% endif %}
+                            {% endfor %}
+                         ]
+               },
+
+             {% endif %}
+             ];
+
+             var options = {
+          			id_div_container: "container_{{ visavail_id}}",
+          			id_div_graph: "{{ visavail_id }}",
+
+          			zoom:{
+          				enabled:true
+          			},
+                responsive:{
+          				enabled:true
+          			},
+                title:{
+                  text:"Data Availability by source"
+                },
+                tooltip:{
+                  position:browser_display,
+                  left_spacing:browser_spacing,
+                  // date_plus_time:true,
+                },
+                legend:{
+                  // enabled:false,
+                  // has_data_text : "Data available",
+                  has_no_data_text 	: "Remainig gaps",
+                },
+                display_date_range: [new Date(year, 0, 1),new Date(year, 12, 31)],
+                date_in_utc:false,
+                // icon: {
+              	// 	class_has_data: 'fas fa-fw fa-check',
+              	// 	class_has_no_data: 'fas fa-fw fa-exclamation-circle'
+              	// },
+
+          		};
+
+        	   var chart_{{nslc.id}} = visavail.generate(options, dataset_{{nslc.id}})
+
+
+
+         {% endwith %}
+        {% endfor %}
+      }
+        $("#PreviousYear").on("click", function(event) {
+
+            year--;
+            // {% for nslc in chan_list %}
+            //    {% with visavail_id="visavail_"|add:nslc.code|pt2underscore %}
+            //     $( {{ visavail_id }}).text('');
+            //    {% endwith %}
+            // {% endfor %}
+
+            draw_avail()
+            updateURL(year);
+            updateHREFS(year);
+        });
+        $("#NextYear").on("click", function(event) {
+
+            year++;
+            draw_avail()
+            updateURL(year);
+            updateHREFS(year);
+        });
+
+
+        $("li[id^=year]").each(function(){
+            $(this).on("click", function(event) {
+                id = $(this).attr("id");
+                year = id.replace("year", "");
+                year = parseInt(year);
+                // console.log(year);
+                draw_avail()
+                updateURL(year);
+                updateHREFS(year);
+            });
+        });
+
+
+
+    </script>
+  </body>
+</html>

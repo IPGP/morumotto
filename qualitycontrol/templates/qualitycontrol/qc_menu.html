@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/basics.html" %}
+  </head>
+
+  <body>
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <li class="breadcrumb-item active" aria-current="page">Quality Control</li>
+      </ol>
+    </nav>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-3">
+
+        </div>
+        <div class="col-7 col-lg-6">
+
+          <center>
+            <ul class="list-group">
+              <a class="list-group-item list-group-item-action" href="status" type=button>
+                <i class="far fa-dot-circle"></i> Status
+              </a>
+              <a class="list-group-item list-group-item-action" href="update_metadata" type=button>
+                <i class="fas fa-sync-alt"></i> Update Metadata
+              </a>
+              <a class="list-group-item list-group-item-action list-group-item-danger" href="check_metadata" type=button>
+                <i class="fas fa-check-double"></i> Check Metadata
+              </a>
+              <a class="list-group-item list-group-item-action" href="map_stations" type=button>
+                <i class="fas fa-map-marker-alt"></i> Stations location
+              </a>
+              <a class="list-group-item list-group-item-action" href="plot_response" type=button>
+                <i class="fas fa-chart-bar"></i> Plot Response files
+              </a>
+              <a class="list-group-item list-group-item-action list-group-item-danger" href="metadata_vs_data" type=button>
+                <i class="fas fa-check-double"></i> Check Metadata VS Data
+              </a>
+              <a class="list-group-item list-group-item-action list-group-item-danger" href="check_data" type=button>
+                <i class="fas fa-check-double"></i> Check Data
+              </a>
+              <a class="list-group-item list-group-item-action list-group-item-danger" href="plot_completion" type=button>
+                <i class="fas fa-chart-bar"></i> Plot Completion
+              </a>
+            </ul>
+          </center>
+
+        </div>
+      </div>
+    </div>
+    {% include "home/footer.html" %}
+    <script>
+      $('form .submit-link').on({
+          click: function (event) {
+              event.preventDefault();
+              $(this).closest('form').submit();
+          }
+      });
+      $(document).ready( function () {
+
+        $("#qcBtn").addClass("active");
+        $("#qcMenuDd").addClass("active");
+        $("#logDd").attr("href","/admin/logdb/qclog/")
+      });
+    </script>
+
+  </body>
+</html>

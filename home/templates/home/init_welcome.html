@@ -1,0 +1,15 @@
+{% load static %}
+<div class="modal-body ">
+  <div class="alert alert-success" role="alert">
+     <h4 class="alert-heading">Welcome to Morumotto <img src='{% static "/home/images/logo.png" %}' alt="モルモット" style="border-radius: 50%" width=45px></h4>
+     We are going to initialise few things
+  </div>
+  <em class="text-secondary">* If you don't want to configure any Data Update, and just use the Analysis tool, clic on "Skip to Analysis"</em><br>
+</div>
+<div class="modal-footer">
+  <form method="post">
+    {% csrf_token %}
+      <input type="submit" class="btn btn-outline-primary" name="welcome_skip" value="Skip to Analysis">
+      <input type="submit" class="btn btn-primary" name="welcome_next" value="Next &#8594;">
+  </form>
+</div>

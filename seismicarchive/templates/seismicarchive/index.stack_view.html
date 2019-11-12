@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+  <title>Morumotto</title>
+  {% include "home/headers/datatable.html" %}
+</head>
+<body>
+  {% include "home/header.html" %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb ">
+      <li class="breadcrumb-item active" aria-current="page">Stack</li>
+    </ol>
+  </nav>
+  <div class="container-fluid">
+    <p align="center">
+      {% if user.is_authenticated %}
+        <a id="addRequest" href="/seismicarchive/newrequest" class="btn btn-success" role="button"><i class="fas fa-plus"></i> Add Request(s)</a>
+        <a id="executeStack" href="/seismicarchive/update" class="btn btn-success" role="button"><i class="fas fa-play"></i> Update Archive</a>
+      {% else %}
+        <button class="btn btn-success" title="Sign in to use" disabled><i class="fas fa-plus"></i> Add Request(s)</button>
+        <button class="btn btn-success" title="Sign in to use" disabled><i class="fas fa-play"></i> Update Archive</button>
+
+      {% endif %}
+    </p><br>
+    <table id='table_id' class="display" style="width:100%">
+      <thead>
+        <tr>
+          <th align="center" style="width: 90px">request id</th>
+          <th align="center">NSLC</th>
+          <th align="center">Gap id</th>
+          <th align="center">Gap starttime</th>
+          <th align="center">Gap endtime</th>
+          <th align="center">status</th>
+          <th align="center" style="width: 5px">timeout</th>
+          <th align="center">Postfiles</th>
+          <th align="center">Patch</th>
+          <th align="center" style="width: 5px">
+            <button type="button" id="delete" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
+              Delete
+            </button>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {%for request in request_stack %}
+          <tr>
+            <td>{{request.pk}}</td>
+            <td>
+            {% if request.gap.nslc.sta.multiplexing %}
+              {{ request.gap.nslc.net.name|add:"."|add:request.gap.nslc.sta.name|add:".*.*"}}
+            {% else %}
+              {{ request.gap.nslc }}
+            {% endif %}
+            </td>
+            <td>{{request.gap.pk}}</td>
+            <td>{{request.gap.starttime|date:"Y-m-d H:i:s"}}</td>
+            <td>{{request.gap.endtime|date:"Y-m-d H:i:s"}}</td>
+            <td>
+              {% if request.status == "succeeded" %}
+              <span style="font-size: 1em" class="text-success">
+              {% elif request.status == "on_hold" or request.status == "failed" %}
+              <span style="font-size: 1em" class="text-danger">
+              {% else %}
+              <span style="font-size: 1em" class="text-warning">
+              {% endif %}
+              <b>
+                {{request.status}}
+              </b>
+              </span>
+            </td>
+            <td>{{request.timeout}}</td>
+            <!-- {% with request.postfile.all|first as first_postfile %}
+              <td>{{first_postfile.filename}}</td>
+            {% endwith %} -->
+            <td>
+              {% for postfile in request.postfile.iterator %}
+                Source: {{postfile.source}} -- File : {{ postfile.filename }}<br>
+              {% endfor %}
+            <td>{{request.tempdir}}</td>
+            <td></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th>
+            <button type="button" class="btn btn-sm btn-primary" disabled>
+              Filtering:
+            </button>
+          </th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Warning</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete <i type="text" id="checkedboxes" value=""></i> requests from your database?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <form method="post" name="delete request"  id="delete1" >
+            {% csrf_token %}
+            <!-- <span class="icon-input-btn"><span class="fas fa-minus"></span> -->
+            <input id="deleteRequest" type="submit" class="btn btn-danger" value="Delete Requests">
+            <!-- </span> -->
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "home/footer.html" %}
+  <script>
+    $(document).ready( function () {
+
+      $("#stackBtn").addClass("active");
+      $("#stackDd").addClass("active");
+      $("#logDd").attr("href","/admin/logdb/updatelog/")
+      var table = $('#table_id').DataTable( {
+        initComplete: function () {
+          this.api().columns([1]).every( function () {
+              var column = this;
+              // var select = $('<select><option value=""></option></select>')
+              var select = $('<select><option value="">Show all</option></select>')
+                  .appendTo( $(column.footer()).empty() )
+                  .on( 'change', function () {
+                      var val = $.fn.dataTable.util.escapeRegex(
+                          $(this).val()
+                      );
+                      myMule = val;
+                      column
+                          .search( val ? '^'+val+'$' : '', true, false )
+                          .draw();
+                  });
+              column.data().unique().sort().each( function ( d, j ) {
+                  select.append( '<option value="' + d + '">' + d.substr(0,30) + '</option>' )
+              } );
+              $( select ).click( function(e) {
+                   e.stopPropagation();
+             });
+          } );
+        },
+        scrollX: true,
+        scrollY: 450,
+        scrollCollapse: true,
+        paging: true,
+        orderCellsTop: true,
+        fixedHeader: true,
+        "order": [[5,'asc'],[4,'desc']],
+        "deferRender": true,
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        columnDefs: [ {
+            orderable: false,
+            className: 'select-checkbox',
+            targets:   -1
+        } ],
+        dom: 'fiBtlp',
+              buttons: [
+                  'selectAll',
+                  'selectNone',
+              ],
+        select: {
+            style:    'multi',
+            selector: 'td:last-child'
+        },
+      });
+
+      // Number of selected rows
+      $("#delete").click(function(){
+        var count = table.rows( { selected: true } ).count();
+         $("#checkedboxes").text(" "+count+" ");
+      });
+
+      // Send the list of deleted request to the backend
+      // Récupérer le form html
+      var $deleteForm = $('#delete1');
+
+      $deleteForm.one('submit', function (event) {
+        event.preventDefault();
+        var selected_data = table.rows( { selected: true } ).data();
+
+        for (var i=0; i < selected_data.length ; i++) {
+          var $inputHidden = $('<input name="request_to_delete" type="hidden">');
+          $inputHidden.val(selected_data[i][0]);
+          $(this).append($inputHidden);
+        }
+
+        $(this).submit();
+      });
+
+
+
+
+
+
+      $('#container').css( 'display', 'block' );
+      table.columns.adjust().draw();
+
+      {% if user.is_authenticated %}
+        $('#deleteRequest').tooltip({'trigger':'hover', 'title': 'Delete all selected requests'});
+        $('#addRequest').tooltip({'trigger':'hover', 'title': 'Create a new request'});
+      {% else %}
+        $('#delete').attr({"disabled":"true","title":"Sign in to use"});
+      {% endif %}
+
+
+      // setTimeout(function () { location.reload(1); }, 60000); // Reloads page every minutes
+    });
+
+  </script>
+
+</body>
+</html>

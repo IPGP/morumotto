@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/datatable.html" %}
+  </head>
+
+  <body>
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <li class="breadcrumb-item"><a href="/qualitycontrol">Quality Control</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Check Data</li>
+      </ol>
+    </nav>
+
+    <div class="container">
+      <div class="alert alert-danger" role="alert">
+        <i class="fas fa-ghost"></i> Not available yet, currently under development
+      </div>
+    </div>
+    <div class="container-fluid">
+
+      <div class="row">
+        <div class="col-3">
+          <div class="float-right">
+            <form method="post">
+              {% csrf_token%}
+              {% for field in form %}
+                <div class="submit-link-row">
+                  <h6><b>{{ field.label_tag }}</b></h6>
+                  {{ field }}
+                  <br>
+                </div>
+                {% if form.errors %}
+                  {% for error in field.errors %}
+                    <p class="error-message" style="color:red">
+                      <strong>{{ error|escape }}</strong>
+                    </p>
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+              <br>
+              <input type="submit" class="btn btn-sm btn-primary"  name="check_data" value="Check Data">
+            </form>
+          </div>
+        </div>
+        <div class="col-8 col-lg-7">
+          <h5 class="text-primary">
+            Data report :
+          </h5>
+          <br>
+          <table id='table_id' class="display" style="width:100%">
+            <thead>
+              <tr>
+                <th align="center">ID</th>
+                <th align="center">Type</th>
+                <th align="center">Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              {%for message in data_report %}
+                <tr>
+                  <td>{{message.id}}</td>
+                  <td>{{message.lon}}</td>
+                  <td>{{message.file}}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>
+                  <button type="button" class="btn btn-sm btn-primary" disabled>
+                    Filtering:
+                  </button>
+                </th>
+                <th></th>
+                <th></th>
+              </tr>
+            </tfoot>
+          </table>
+          <br>
+          <b class="text-secondary">Station(s): </b>
+          <em class ="text-secondary">
+            {% for md in data_report %}
+              {% if not forloop.last %}
+                {{ md.nslc }},
+              {% else %}
+                {{ md.nslc }}
+              {% endif %}
+            {% endfor %}
+          </em>
+        </div>
+      </div>
+
+    </div>
+    {% include "home/footer.html" %}
+  </body>
+  <script>
+    $(document).ready( function () {
+      $("#qcBtn").addClass("active");
+      $("#dataDd").addClass("active");
+      $("#logDd").attr("href","/admin/logdb/qclog/")
+      var table = $('#table_id').DataTable( {
+        initComplete: function () {
+          this.api().columns([1,]).every( function () {
+              var column = this;
+              // var select = $('<select><option value=""></option></select>')
+              var select = $('<select><option value="">Show all</option></select>')
+                  .appendTo( $(column.footer()).empty() )
+                  .on( 'change', function () {
+                      var val = $.fn.dataTable.util.escapeRegex(
+                          $(this).val()
+                      );
+                      myMule = val;
+                      column
+                          .search( val ? '^'+val+'$' : '', true, false )
+                          .draw();
+                  });
+              column.data().unique().sort().each( function ( d, j ) {
+                  select.append( '<option value="' + d + '">' + d.substr(0,30) + '</option>' )
+              } );
+              $( select ).click( function(e) {
+                   e.stopPropagation();
+             });
+          } );
+        },
+        scrollX: true,
+        scrollY: 350,
+        scrollCollapse: true,
+        paging: false,
+        orderCellsTop: true,
+        fixedHeader: true,
+        "order": [[1,'desc']],
+        dom: 'fitp',
+        select: {
+            style:    'multi',
+        },
+      });
+      table.columns.adjust().draw();
+    });
+  </script>
+</html>

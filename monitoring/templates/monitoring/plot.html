@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+{% load static %}
+
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/basics.html" %}
+  </head>
+  <body>
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <!-- <li class="breadcrumb-item"><a href="/home">Home</a></li> -->
+        <li class="breadcrumb-item"><a href="/monitoring/netgaps">Networks</a></li>
+        {% with stats=stats_list|first %}
+          <li class="breadcrumb-item"><a href="/monitoring/gaps/{{stats.net}}/{{stats.sta}}/{{stats.loc}}/{{stats.comp}}">Stations</a></li>
+          <li class="breadcrumb-item"><a href="/monitoring/stats/{{stats.net}}/{{stats.sta}}/{{stats.loc}}/{{stats.chan}}">{{stats.net}}.{{stats.sta}}.{{stats.loc}}.{{stats.chan}}</a></li>
+          <li class="breadcrumb-item active" aria-current="page">{{date}}</li>
+        {% endwith %}
+      </ol>
+    </nav>
+      <!-- {% with stats=stats_list|first %}
+        <a href="/monitoring/stats/{{stats.net}}/{{stats.sta}}/{{stats.loc}}/{{stats.chan}}" class="btn btn-secondary" role="button" id="sta_net"><i class="fa fa-chevron-left"></i> Back to {{stats.net}}.{{stats.sta}}.{{stats.loc}}.{{stats.chan}}</a>
+      {% endwith %} -->
+    <div class="container">
+      {% if display_picture is True %}
+        <div class="row">
+          <div class="col md-2">
+            <div class="row justify-content-center">
+
+              {% if previous %}
+                <a href="/monitoring/plot/{{previous.year}}/{{previous.net}}.{{previous.sta}}.{{previous.loc}}.{{previous.chan}}.D.{{previous.day|date:"z"}}"
+                class="btn btn-outline-secondary" role="button">
+                  <i class="fa fa-chevron-left"></i> Previous
+                </a>
+              {% else %}
+                <a href="#" class="btn btn-outline-secondary disabled" role="button" aria-disabled="true"><i class="fa fa-chevron-left"></i> Previous</a>
+              {% endif %}
+
+              &nbsp;
+              <button class="btn btn-primary" role="button" onclick="document.getElementById('plot').src='{% static plotdir|add:filename_id|add:'.'|add:extension %}' " >
+                <i class="fa fa-search-minus "></i> Basic View
+              </button>
+              &nbsp;
+              <button class="btn btn-success" role="button" onclick="document.getElementById('plot').src='{% static plotdir|add:filename_id|add:'.day.'|add:extension %}' " >
+                <i class="fa fa-search-plus"></i> Day Plot
+              </button>
+              &nbsp;
+
+              {% if next %}
+                <a href="/monitoring/plot/{{next.year}}/{{next.net}}.{{next.sta}}.{{next.loc}}.{{next.chan}}.D.{{next.day|date:"z"}}"
+                class="btn btn-outline-secondary" role="button">
+                  <i class="fa fa-chevron-right"></i> Next
+                </a>
+              {% else %}
+                <a href="#" class="btn btn-outline-secondary disabled" role="button" aria-disabled="true"><i class="fa fa-chevron-right"></i> Next</a>
+              {% endif %}
+
+            </div>
+            <br>
+            <div class="row">
+              <img data-enlargable style="cursor: zoom-in" src="{% static plotdir|add:filename_id|add:'.'|add:extension %}" id="plot" />
+            </div>
+          </div>
+          <div class="col md-2"></div>
+        </div>
+      {% else %}
+        <div class="alert alert-danger">
+          <p><i class="fa fa-exclamation-circle"></i>
+            Could not compute plot from stream :
+            <br>
+            ERROR : {{display_picture}}
+          </p>
+        </div>
+      {% endif %}
+    </div>
+    {% include "home/footer.html" %}
+    <script>
+        // panzoom(document.getElementById('truc'), {
+        //   beforeWheel: function(e) {
+        //     // allow wheel-zoom only if altKey is pressed. Otherwise - ignore
+        //     var shouldIgnore = !e.altKey;
+        //     return shouldIgnore;
+        //   }
+        // })
+        $(document).ready( function () {
+          $("#monitBtn").addClass("active");
+          $("#plotStaDd").addClass("active");
+          $("#logDd").attr("href","/admin/logdb/monitoringlog/")
+        });
+
+
+      $('img[data-enlargable]').addClass('img-enlargable').click(function(){
+          var src = $(this).attr('src');
+          $('<div>').css({
+              background: 'RGBA(0,0,0,.5) url('+src+') no-repeat center',
+              backgroundSize: 'contain',
+              width:'100%', height:'100%',
+              position:'fixed',
+              zIndex:'10000',
+              top:'0', left:'0',
+              cursor: 'zoom-out'
+          }).click(function(){
+              $(this).remove();
+          }).appendTo('body');
+      });
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/calendar.html" %}
+  </head>
+  <body>
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <li class="breadcrumb-item active" aria-current="page">Networks</li>
+      </ol>
+    </nav>
+    <div class="container">
+    <center>
+      <button id="PreviousYear" class="btn btn-outline-secondary"><i class="fa fa-chevron-left"></i> Prev year</button>
+      <button id="NextYear" class="btn btn-outline-secondary">Next year <i class="fa fa-chevron-right"></i></button>
+
+      <div class="btn-group">
+        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown">
+            Go to year
+        </button>
+        <ul class="dropdown-menu">
+          {% for year in year_list %}
+            <li class="dropdown-item" id="year{{year}}"><a href="javascript:;">{{year}}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="btn-group">
+        <a href="/monitoring/netgaps" class="btn btn-outline-secondary" type=button id="sta_gaps">Gaps</a>
+        <button type="button" class="btn btn-secondary"  id="sta_overlaps" aria-disabled="true">Overlaps</button>
+      </div>
+      <a href="/admin/monitoring/archivemonitoring/{{monitoring_id}}/change"
+       class="btn btn-outline-secondary" role="button">
+        <i class="fa fa-sliders-h"></i>
+        Configuration
+      </a>
+    </center>
+
+    <br>
+    <div class="tabbable">
+      <ul class="nav nav-tabs" role="tablist">
+        {% for net in net_list %}
+          {% if forloop.first %}
+            <li class="nav-item">
+              <a class="nav-link active" href={{"#tab_"|add:net}} data-toggle="tab">{{net}}</a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href={{"#tab_"|add:net}} data-toggle="tab">{{net}}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+      <br>
+      <div class="tab-content">
+        {% for net in net_list %}
+          {% if forloop.first %}
+              <div class="tab-pane fade show active " id={{"tab_"|add:net}}>
+                <ul class="nav">
+                  <div class="panel">
+                    {% for comp in comp_list %}
+                      {% for key, value in default_path.items %}
+                        {% if key == net|add:"_"|add:comp %}
+                          <h7><a id="sta_" href="/monitoring/overlaps/{{value}}">{{net}}.{{comp}}</a></h7>
+                          <div id="{{"cal-heatmap-"|add:key}}"></div>
+                          <br>
+                        {% endif %}
+                      {% endfor %}
+                    {% endfor %}
+                  </div>
+                </ul>
+              </div>
+            {% else %}
+              <div class="tab-pane fade" id={{"tab_"|add:net}}>
+                <ul class="nav">
+                  <div class="panel">
+                    {% for comp in comp_list %}
+                      {% for key, value in default_path.items %}
+                        {% if key == net|add:"_"|add:comp %}
+                          <h7><a id="sta_" href="/monitoring/overlaps/{{value}}">{{net}}.{{comp}}</a></h7>
+                          <div id="{{"cal-heatmap-"|add:key}}"></div>
+                          <br>
+                        {% endif %}
+                      {% endfor %}
+                    {% endfor %}
+                  </div>
+                </ul>
+              </div>
+            {% endif %}
+          {% endfor %}
+      </div>
+      <div class="alert alert-warning alert-dismissible fade show" role="alert" hidden id="leapWarning">
+        <strong>Warning!</strong> There is a leap second on <ins id="leapYear"></ins>
+        <button type="button" class="close" aria-label="Close" id="closeWarning">
+          <span>&times;</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- The update modal -->
+  <!-- <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="updateModalLabel">Stats</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div> -->
+
+  {% include "home/footer.html" %}
+
+
+    {% for key, value in statistics.items %}
+      {% for net in net_list %}
+        {% for comp in comp_list %}
+          {% if key == "ref_"|add:net|add:"_"|add:comp %}
+            {% with id=net|add:"_"|add:comp %}
+              {{ value|json_script:id }}
+            {% endwith %}
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+
+  <script type="text/javascript">
+
+    // this is for the modal window to show progressbar
+    $(document).ready(function() {
+      $("#monitBtn").addClass("active");
+      $("#netOverDd").addClass("active");
+      $("#logDd").attr("href","/admin/logdb/monitoringlog/");
+      $("#adminDd").attr("href","/admin/monitoring/averagestat/");
+      $("#closeWarning").click( function () {
+        $("#leapWarning")[0].setAttribute("hidden",true);
+      });
+      // var $modal = $('#updateModal');
+      // var $modalTitle = $modal.find('.modal-title');
+      // var $modalBody = $modal.find('.modal-body');
+      // var $modalFooter = $modalBody.find('.modal-footer')
+      //  $("#dialog1").submit(function(event){
+      //    $modalTitle.text('Updating Statistics');
+      //    // $modalFooter.text('Close')
+      //     event.preventDefault();
+      //     var csrfToken = $(this).find("[name='csrfmiddlewaretoken']").val();
+      //     var ajaxReq = $.ajax({
+      //       method: "POST",
+      //       url: '/monitoring/progressdialog',
+      //       data: { csrfmiddlewaretoken: csrfToken }
+      //     })
+      //       .done(function(data) {
+      //         // console.log(data);
+      //
+      //         $modalBody.html(data);
+      //       }).fail(function(jqXHR, textStatus){
+      //         console.log('fail');
+      //         $modalBody.html('FAILED...');
+      //       });
+      //  });
+    });
+
+    $(function () {
+      $('[data-toggle="popover"]').popover()
+    })
+
+    function set_legend_width() {
+      {% for comp in comp_list %}
+        {% for net in net_list %}
+          {% with id=net|add:"_"|add:comp %}
+            {% if id in default_path.keys %}
+              var legend_id = "{{ 'cal-heatmap-'|add:id|add:'_legend' }}";
+              var ref = document.getElementById(legend_id)
+              $(ref).attr("width", 80)
+            {% endif %}
+          {% endwith %}
+        {% endfor %}
+      {% endfor %}
+    }
+
+        function getUrlParameter(sParam) {
+            var sPageURL = window.location.search.substring(1);
+            var sURLVariables = sPageURL.split('&');
+            for (var i = 0; i < sURLVariables.length; i++) {
+                var sParameterName = sURLVariables[i].split('=');
+                if (sParameterName[0] == sParam) {
+                    return sParameterName[1];
+                }
+            }
+        }
+
+        function updateURL(year) {
+            var pageURL = window.location.href.split("?")[0];
+            newPageURL = pageURL + "?year=" + year;
+            window.history.pushState("", "", newPageURL);
+        }
+
+        function updateHREFS(year) {
+            $("a[id^=sta_]").each(function(){
+                href = $(this).attr("href");
+                if (href.indexOf("javascript") == -1) {
+                    $(this).attr("href", href.split("?")[0] + "?year=" + year);
+                }
+            });
+        }
+
+        function updateLEAP(year) {
+          $("#leapWarning")[0].setAttribute("hidden",true);
+          {% for leap_second in leap_seconds %}
+            var leap_sec = "{{ leap_second }}"
+            if (leap_sec.includes(year) ){
+              console.log(leap_sec)
+              $("#leapWarning")[0].removeAttribute("hidden");
+              $("#leapYear").text(leap_sec);
+            }
+          {% endfor %}
+        }
+
+        var year = getUrlParameter("year");
+        if (typeof year === "undefined") {
+            year = {{ year_list|last }};
+        } else {
+            year = parseInt(year);
+        };
+        updateURL(year);
+        updateHREFS(year);
+        updateLEAP(year);
+
+
+        var common_args = {
+            domain: "month",
+            start: new Date(year, 0, 1),
+            range: 12,
+
+            legend: [5, 10, 30],
+            legendColors: {
+              max: "#dc3545",
+              overflow: "#6f42c1",
+              base: "#F5F5F6",
+              empty: "#20c997",
+              min: "#F0E68C"
+              // max: "#6610f2",
+              //   overflow: "#e83e8c",
+              //   base: "#F5F5F6",
+              //   empty: "#20c997",
+              //   min: "#C3C3E4"
+            },
+
+            itemName: ["minute", "minutes"],
+            legendTitleFormat: {
+                lower: "Less than {min} {name} of daily overlap span",
+                inner: "Between {down} and {up} {name} of daily overlap span",
+                upper: "More than {max} {name} of daily overlap span"
+            },
+
+            domainLabelFormat: "%Y-%m",
+            subDomainTitleFormat: {
+                empty: "No data for {date}",
+                filled: "{count} {name} of overlap span on {date}"
+            },
+            subDomainDateFormat: "%Y-%m-%d",
+            tooltip: true
+        };
+
+
+        var cals = [];
+        // Cal Heatmap displays data in the local date system, but we need it
+        // to display data in UTC, hence the following function
+        // See : https://github.com/wa0x6e/cal-heatmap/issues/126
+        var display_data_as_utc = function (data) {
+          var offset = new Date().getTimezoneOffset() * 60;
+          var results = {};
+          for (var timestamp in data) {
+            var commitCount = data[timestamp];
+            timestamp = parseInt(timestamp, 10);
+            results[timestamp + offset] = commitCount;
+          };
+          return results;
+        };
+        {% for comp in comp_list %}
+          {% for net in net_list %}
+            {% with id=net|add:"_"|add:comp %}
+              {% if id in default_path.keys %}
+                var args = {
+                    itemSelector: "{{ "#cal-heatmap-"|add:id }}",
+                    data: JSON.parse(document.getElementById("{{ id }}").textContent),
+                    afterLoadData: display_data_as_utc,
+                    afterLoad: function(){
+                        var id = "{{ '#cal-heatmap-'|add:id }}";
+                        var $legend = $(id);
+                        $legend.append('<svg height="25"><rect class="day" y="2" x="12" width="10" height="10" fill-opacity="1" fill="#F5F5F6"><title>No Data</title></rect><rect class="day" y="2" x="24" width="10" height="10" fill-opacity="1" fill="#20c997"><title>Day OK</title></rect></svg>');
+                    }
+                };
+                jQuery.extend(args, common_args);
+                var cal = new CalHeatMap();
+                cal.init(args);
+                cals.push(cal);
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        {% endfor %}
+
+        $("#PreviousYear").on("click", function(event) {
+            for (var i in cals) {
+                cals[i].previous(12);
+            }
+            year--;
+            updateURL(year);
+            updateHREFS(year);
+            updateLEAP(year);
+        });
+        $("#NextYear").on("click", function(event) {
+            for (var i in cals) {
+                cals[i].next(12);
+            }
+            year++;
+            updateURL(year);
+            updateHREFS(year);
+            updateLEAP(year);
+        });
+
+
+        $("li[id^=year]").each(function(){
+            $(this).on("click", function(event) {
+                id = $(this).attr("id");
+                year = id.replace("year", "");
+                year = parseInt(year);
+                console.log(year);
+                for (var i in cals) {
+                    cals[i].jumpTo(new Date(year, 0), true);
+                }
+                updateURL(year);
+                updateHREFS(year);
+                updateLEAP(year);
+            });
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+  <title>Morumotto</title>
+  {% include "home/headers/basics.html" %}
+</head>
+<body>
+  {% include "home/header.html" %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb ">
+      <li class="breadcrumb-item"><a href="/seismicarchive/stack">Monitoring</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Update Statistics</li>
+    </ol>
+  </nav>
+  <div class="container">
+    <div class="row">
+      <div class="col-6">
+        <h2> Update Statistics </h2>
+        <br>
+        <div>
+          <form method="post">
+              {% csrf_token %}
+              <input type="submit" class="btn btn-success" value="Update"
+              name="celery_update_monitoring" id="statsInput">
+          </form>
+        </div>
+        {% if display_statistics == True %}
+          <br><br><br>
+          <div class="basic">
+            {% include "monitoring/progress_statistics.html" %}
+          </div>
+        {% endif %}
+
+        <br><br>
+      </div>
+    </div>
+  </div>
+  <!-- Celery Error Modal -->
+  <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="errorModalLabel">Celery error</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+
+          <div class="alert-celery">
+            <p><i class="fa fa-exclamation-circle"></i> {{ celery_status.ERROR }}</p>
+            <p>
+              1) Try to refresh page <br>
+              2) If refresh doesn't work, restart your Celery deamon and refresh page :
+            </p>
+          </div>
+          <div class="code">$ sudo supervisorctl restart morumotto:morumotto_celery</div><br>
+          <em class="text-secondary">* Update button is disabled</em><br>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include "home/footer.html" %}
+
+  <script>
+    $(document).ready(function() {
+      $("#updateBtn").addClass("active");
+      $("#updateStatsDd").addClass("active");
+      $("#logDd").attr("href","/admin/logdb/monitoringlog/")
+      {% if celery_status.ERROR %}
+         $("#statsInput").attr("disabled", "disabled");
+         $('#errorModal').modal('show')
+      {% endif %}
+
+
+    });
+  </script>
+  </body>
+</html>

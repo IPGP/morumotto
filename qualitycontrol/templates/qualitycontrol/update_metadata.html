@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/basics.html" %}
+  </head>
+
+  <body>
+
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <li class="breadcrumb-item"><a href="/qualitycontrol">Quality Control</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Update Metadata</li>
+      </ol>
+    </nav>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-1 col-lg-3">
+        </div>
+        <div class="col-10 col-lg-6">
+          <b> 1. From a local directory : </b>
+          <form method="post">
+            {% csrf_token %}
+            {{dir_form.as_p}}
+            <input type="submit" class="btn btn-sm btn-primary" name="folder_update" value="Submit">
+          </form>
+          <br><br>
+          <b> 2. Using a Webservice : </b>
+          <form method="post">
+            {% csrf_token %}
+            {{ws_form.as_p}}
+            <input type="submit" class="btn btn-sm btn-primary" name="ws_update" value="Submit">
+          </form>
+          <br><br>
+          <b> 3. Using a SVN directory : </b>
+          <form method="post">
+            {% csrf_token %}
+            {{svn_form.as_p}}
+            <input type="submit" class="btn btn-sm btn-primary" name="svn_update" value="Submit">
+          </form>
+          <br>
+          <em class="text-secondary">* Note: When you will click on Submit,
+            the crontab will be uploaded, so that metadata are uploaded each day at
+            midnight with the chosen method</em>
+          <br>
+        </div>
+      </div>
+
+    </div>
+    {% include "home/footer.html" %}
+    <script>
+      $(document).ready( function () {
+
+        $("#qcBtn").addClass("active");
+        $("#updateMdDd").addClass("active");
+        $("#logDd").attr("href","/admin/logdb/qclog/")
+      });
+    </script>
+  </body>
+
+</html>

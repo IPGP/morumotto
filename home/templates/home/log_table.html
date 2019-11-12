@@ -1,0 +1,94 @@
+{% load datetime_to_str %}
+<div class="row">
+  <div class="col-11">
+    <h6><b> Last actions : </b></h6>
+  </div>
+  <div class="col-1">
+    <a class="btn btn-primary fas fa-sync-alt" title="Refresh" href="/home"></a>
+    <!-- <button class="btn btn-primary" value="Refresh Page" onClick="window.location.reload();">Refresh</button> -->
+  </div>
+</div>
+<table id='table_id' class="display" style="width:100%">
+  <thead>
+    <tr>
+      <th align="center">Date (UTC)</th>
+      <th align="center">Log type</th>
+      <th align="center">Level</th>
+      <th align="center">Last Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for log in log_messages %}
+      <tr>
+        <td style="width: 80px">{{ log.create_datetime|datetime_to_str }}</td>
+        <td style="width: 100px">{{ log.logger_name }}</td>
+        <td style="width: 100px">{{ log.get_level_display }}</td>
+        <td>{{ log.msg }}</td>
+      </tr>
+    {% endfor %}
+    {% if last_cron %}
+      <tr>
+        <td style="width: 80px">{{ last_cron_date|datetime_to_str  }}</td>
+        <td style="width: 120px">Crontab</td>
+        <td style="width: 100px">Info</td>
+        <td>{{ last_cron }}</td>
+      </tr>
+    {% endif %}
+
+  </tbody>
+  <tfoot>
+    <tr>
+      <th>
+        <button type="button" class="btn btn-sm btn-primary" disabled>
+          Filtering:
+        </button>
+      </th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </tfoot>
+</table>
+
+<script>
+  $(document).ready( function () {
+
+  var table = $('#table_id').DataTable( {
+    initComplete: function () {
+      this.api().columns([1,2]).every( function () {
+          var column = this;
+          var select = $('<select><option value="">Show all</option></select>')
+              .appendTo( $(column.footer()).empty() )
+              .on( 'change', function () {
+                  var val = $.fn.dataTable.util.escapeRegex(
+                      $(this).val()
+                  );
+                  myMule = val;
+                  column
+                      .search( val ? '^'+val+'$' : '', true, false )
+                      .draw();
+              });
+          column.data().unique().sort().each( function ( d, j ) {
+              select.append( '<option value="' + d + '">' + d.substr(0,30) + '</option>' )
+          } );
+          $( select ).click( function(e) {
+               e.stopPropagation();
+         });
+      } );
+    },
+    scrollX: true,
+    scrollY: 450,
+    scrollCollapse: true,
+    paging: true,
+    orderCellsTop: true,
+    fixedHeader: true,
+    "order": [[0,'desc']],
+    "deferRender": true,
+    "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+
+    dom: 't',
+    });
+
+  });
+
+</script>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/datatable.html" %}
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
+    <link rel="stylesheet" type="text/css" href="{% static 'home/css/home.css' %}">
+  </head>
+  <body>
+    {% include "home/header.html" %}
+    {% if initialise %}
+    {% include "home/initialisation.html" %}
+    {% endif %}
+    <div class="container">
+      <br>
+      <div>
+        <center>
+          {% if user.is_authenticated %}
+          <form method="post">
+            {% csrf_token %}
+            {% if not running %}
+              <span class="icon-input-btn"><span class="far fa-play-circle"></span>
+                <input type="submit" class="btn btn-success" name="start_update"
+                id="startCron" value="Start automatic data update">
+              </span>
+            {% else %}
+              <span class="icon-input-btn"><span class="far fa-stop-circle"></span>
+                <input type="submit" class="btn btn-danger" name="stop_update"
+                id="stopCron" value="Stop automatic data update">
+              </span>
+            {% endif %}
+          </form>
+          {% else %}
+            {% if not running %}
+              <button type="button" class="btn btn-success" title="Sign in to use" disabled><i class="far fa-play-circle" ></i>&nbsp; Start automatic data update</button>
+            {% else %}
+              <button type="button" class="btn btn-danger" title="Sign in to use" disabled><i class="far fa-stop-circle"></i>&nbsp; Stop automatic data update</button>
+            {% endif %}
+          {% endif %}
+        </center>
+      </div>
+      <br><hr><br>
+      {% include "home/log_table.html" %}
+    </div>
+
+    {% include "home/footer.html" %}
+
+    <script type="text/javascript">
+
+
+        function get_template() {
+          var pluginField = document.getElementById("id_type").value;
+          {% for key, val in parameters.items %}
+            if (pluginField == "{{ key }}") {
+              {% autoescape on %}
+                $('#id_parameters').attr('placeholder', "{{ val|safe }}")
+              {% endautoescape %}
+            }
+          {% endfor %}
+        }
+
+
+       function update_value(){
+         drawTimeline()
+       }
+
+       function drawTimeline() {
+         $('#hoverRes').find('.coloredDiv').css('background-color',"white");
+         $('#hoverRes').find('#timelineLegend').text("");
+         var width = 400;
+         var f_analysis=parseInt(document.getElementById("id_f_analysis").value);
+         var w_analysis=parseInt(document.getElementById("id_w_analysis").value);
+         var l_analysis=parseInt(document.getElementById("id_l_analysis").value);
+         var granularity=document.getElementById("id_granularity_type").value;
+         if (granularity === "daily") {
+             var gran = 3600*24;
+             var unit = "day(s)"
+         } else {
+             var gran = 3600;
+             var unit = "hour(s)"
+         };
+
+         var utcTimestamp = moment.utc().startOf('hour').valueOf()
+         var now = parseInt(utcTimestamp)
+         var windowStart = now-(l_analysis+w_analysis)*gran*1000
+         var newDataStart = now-(l_analysis+f_analysis)*gran*1000
+         var windowEnd = now-l_analysis*gran*1000
+         var windowSize = (l_analysis+w_analysis)
+         var oldData = windowStart - 5*gran*1000
+         // alert(moment.utc(windowStart).format() + ", " + moment.utc(newDataStart).format() + ", " + moment.utc(windowEnd).format() + ", " + moment.utc(now).format())
+         var windowTimes = [
+         //  {class: "Start", times: [{"color":"#007bff", "label":"Analysis", "starting_time": windowStart, "ending_time": newDataStart}]},
+         //  {class: "New data to be analyzed", times: [{"color":"#84e19a", "label":"New", "starting_time": newDataStart, "ending_time": windowEnd}, ]},
+         //  {class: "Latency of analysis", times: [{"color":"#e9ecef", "label":"Latency", "starting_time": windowEnd, "ending_time": now}]}
+         // ];
+             {label: "Window",
+               total_time: "Window length is ".concat(' ',w_analysis,unit),
+               times: [{"color":"#ffc107",
+                        "legend": "Old data. Not updated anymore",
+                        "starting_time": oldData,
+                        "ending_time": windowStart,
+                        "total_time": ""},
+                        {"color":"#28a745",
+                        "legend": " Data to be updated",
+                        "starting_time": windowStart,
+                        "ending_time": newDataStart,
+                        "total_time":
+                          "Length: ".concat(' ', w_analysis-f_analysis,' ', unit), },
+                        {"color":"#84e19a",
+                         "legend": " New data",
+                         "starting_time": newDataStart,
+                         "ending_time": windowEnd,
+                         "total_time":
+                          "Length: ".concat(' ', f_analysis, ' ', unit), },
+                      ]},
+             {label: "Latency",
+               times: [{"color":"#e9ecef",
+                        "legend": "Latency of analysis",
+                        "starting_time": windowEnd,
+                        "ending_time": now,
+                        "total_time": "Length: ".concat(' ',l_analysis,' ', unit)},
+                      ]}
+        ];
+
+         var chart = d3.timeline()
+           // .relativeTime()
+           // .beginning(windowStart)
+           // .ending(now)
+           // .rotateTicks(45)
+           .tickFormat({
+             format: function(d) { return d3.time.format("%m/%d %H:%M")(d) },
+             tickTime: d3.time.hours,
+              // tickInterval: 4*windowSize,
+              numTicks: 3,
+              tickSize: 12,
+           })
+           .stack()
+           .margin({left:80, right:40, top:0, bottom:0})
+           .hover(function (d, i, datum) {
+           // d is the current rendering object
+           // i is the index during d3 rendering
+           // datum is the id object
+             var div = $('#hoverRes');
+             div.find('.coloredDiv').css('background-color',d.color)
+             if (d.starting_time != oldData){
+               div.find('#timelineLegend').text(d.legend + ". From: " +
+               moment.utc(d.starting_time).format("YYYY/MM/DD HH:mm") +
+               " to: " + moment.utc(d.ending_time).format("YYYY/MM/DD HH:mm")
+                + ". " + d.total_time );
+                document.getElementById("timelineLegend").style.marginBottom = "0px";
+              }
+             else {
+               div.find('#timelineLegend').text(d.legend)
+               document.getElementById("timelineLegend").style.marginBottom = "24px";
+
+             }
+           })
+           // .hover(function (d, i, datum) {
+           // // d is the current rendering object
+           // // i is the index during d3 rendering
+           // // datum is the id object
+           //   var div = $('#hoverRes');
+           //   div.find('#name').text(datum.class);
+           // })
+         d3.select('#timeline3').selectAll('svg').remove()
+         var svg = d3.select("#timeline3").append("svg").attr("width", width)
+           .datum(windowTimes).call(chart);
+
+
+       }
+
+
+      $(document).ready(function() {
+        $("#homeBtn").addClass("active");
+        $("#initModal").modal('show');
+        $('#initModal').on('shown.bs.modal', function (e) {
+          {% if modal == "config" %}
+            drawTimeline();
+          {% endif %}
+        })
+        $('#initModal').on('hidden.bs.modal', function (e) {
+          var pageURL = window.location.href.split("/home")[0];
+          newPageURL = pageURL + "/home";
+          window.location.replace(newPageURL)
+        })
+
+        $('#add_more').click(function() {
+             var form_idx = $('#id_form-TOTAL_FORMS').val();
+             $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
+             $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+         });
+
+         $('.has-popover').tooltip({'trigger':'hover'});
+
+         $("#closeModal").click(function(){
+           var ajaxReq = $.ajax({
+             method: "POST",
+             data: $('#closeModal').serialize()
+           })
+         });
+
+
+       });
+    </script>
+  </body>
+</html>

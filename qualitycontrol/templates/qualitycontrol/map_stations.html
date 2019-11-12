@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+{% load static leaflet_tags %}
+<html>
+  <head>
+    <title>Morumotto</title>
+    {% include "home/headers/map.html" %}
+  </head>
+  <body>
+
+    {% include "home/header.html" %}
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb ">
+        <li class="breadcrumb-item"><a href="/qualitycontrol">Quality Control</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Check stations location on a map</li>
+      </ol>
+    </nav>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-3">
+          <div class="float-right">
+            <form method="post">
+              {% csrf_token%}
+              {% for field in form %}
+                <div class="submit-link-row">
+                  <h6><b>{{ field.label_tag }}</b></h6>
+                  {{ field }}
+                  <br>
+                </div>
+                {% if form.errors %}
+                  {% for error in field.errors %}
+                    <p class="error-message" style="color:red">
+                      <strong>{{ error|escape }}</strong>
+                    </p>
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+              <br>
+              <input type="submit" class="btn btn-sm btn-primary"  name="display_stations" value="Show">
+            </form>
+          </div>
+        </div>
+        <div class="col-8 col-lg-7">
+          <h5 class="text-primary">
+            Localisation :
+
+          </h5>
+          <br>
+          {% if online %}
+            {% leaflet_map "main" callback="main_map_init" %}
+            <br>
+            <b class="text-secondary">Station(s): </b>
+            <em class ="text-secondary">
+              {% for md in metadata %}
+                {% if not forloop.last %}
+                  {{ md.nslc }},
+                {% else %}
+                  {{ md.nslc }}
+                {% endif %}
+              {% endfor %}
+            </em>
+
+          {% else %}
+          <div class="alert alert-danger" role="alert">
+            <i class="fa fa-exclamation-circle"></i>
+              Not available offline, sorry...
+              <br>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+    {% include "home/footer.html" %}
+    <script type="text/javascript">
+      var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+      });
+      // TERMS OF USE OF THE ESRI MAP :
+      // https://github.com/Esri/esri-leaflet#terms
+      // var esriLayer = L.esri.basemapLayer("ImageryClarity", {
+      var esriLayer = L.esri.basemapLayer("ImageryClarity", {
+        maxZoom: 19,
+      });
+
+      function main_map_init (map, options){
+        map.addLayer(osmLayer);
+
+        {% if metadata.count == 1 %}
+          var marker = L.marker([{{ metadata.first.lat }}, {{metadata.first.lon}}]).addTo(map);
+          marker.bindPopup("<b>{{metadata.first.nslc.sta.name}}</b><br>[{{ metadata.first.lat }}, {{metadata.first.lon}}]");
+          map.setView(new L.LatLng({{ metadata.first.lat }}, {{metadata.first.lon}}), 12);
+        // {% elif metadata.count == 0 %}
+        //   navigator.geolocation.getCurrentPosition(function(location) {
+        //   var latlng = new L.LatLng(location.coords.latitude, location.coords.longitude)
+        //   map.setView(latlng, 13)
+        //   });
+        {% else %}
+          var markerArray = [];
+          {% for md in metadata %}
+            var marker = L.marker([{{ md.lat }}, {{md.lon}}])
+            marker.bindPopup("<b>{{md.nslc.sta.name}}</b><br>[{{ md.lat }}, {{md.lon}}]")
+            markerArray.push(marker)
+          {% endfor %}
+          var group = L.featureGroup(markerArray).addTo(map);
+          map.fitBounds(group.getBounds());
+        {% endif %}
+
+        map.addControl(new L.Control.Layers( {
+            'OpenStreetMap': osmLayer,
+            'Satellite' : esriLayer,
+          }, {})
+        );
+
+        map.on('baselayerchange', function(e) {
+          if(e.name == 'OpenStreetMap'){
+            map.attributionControl.setPrefix('<a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>');
+          }else{
+            map.attributionControl.setPrefix('<a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> | Powered by <a href="https://www.esri.com">Esri</a>');
+          }
+        });
+
+      }
+      $(document).ready( function () {
+
+        $("#qcBtn").addClass("active");
+        $("#stationsDd").addClass("active");
+        $("#logDd").attr("href","/admin/logdb/qclog/");
+        // Prevents map button to hide navbar
+        $("#topNavbar").css("z-index", "99999");
+      });
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+<form method="post">
+  {% csrf_token %}
+  <div class="modal-body ">
+    <div class="alert alert-success" role="alert">
+       <h4 class="alert-heading">Add some Network(s)</h4>
+       <em>Leave blank if you already have an xml file containing a list of all
+       N.S.L.C. you want to use</em>
+    </div>
+    <hr>
+    <div id="form_set">
+      {{ network_formset.management_form }}
+      {% for form in network_formset %}
+          <table>
+              {{ form.name }}
+              <br>
+              {{ form.id }}
+          </table>
+      {% endfor %}
+    </div>
+    <input type="button" class="btn btn-secondary" value="+" id="add_more">
+    <div id="empty_form" style="display:none">
+      <table>
+          {{ network_formset.empty_form.name }}
+          <br>
+      </table>
+    </div>
+    <br><br><br>
+  </div>
+  <div class="modal-footer">
+    <input type="submit" class="btn btn-primary" name="networks_prev" value="&#8592 Prev">
+    <input type="submit" class="btn btn-primary" name="networks_next" value="Next &#8594">
+  </div>
+</form>

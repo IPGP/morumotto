@@ -1,0 +1,41 @@
+{% load static %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'home/css/home.css' %}">
+
+<footer class="footer">
+
+  <!-- <p>
+    <a href="https://www.resif.fr/">
+      <img src="{% static 'home/images/logo_resif.png' %}"  alt="Logo resif" width="25" height="25">
+    </a>
+  </p> -->
+  <nav class="navbar navbar-expand-sm navbar-light bg-light">
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link py-0" href='{% static "/docs/user_guide.html" %}'>Docs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link py-0" href="{% url 'about' %}" id="aboutBtn">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link py-0" href="mailto:geber@ipgp.fr">Contact</a>
+        </li>
+
+        <!-- <li class="nav-item">
+          <a class="nav-link py-0" href="#">License</a>
+        </li> -->
+
+        <li class="nav-item">
+          <a class="nav-link py-0" href="https://www.resif.fr/">
+            <img src="{% static 'home/images/logo_resif.png' %}"  alt="Logo resif" width="25" height="25">
+          </a>
+        </li>
+
+      </ul>
+    </div>
+  </nav>
+
+
+</footer>

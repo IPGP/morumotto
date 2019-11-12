@@ -1,0 +1,54 @@
+{%load static %}
+<script type="text/javascript" src="{% static 'home/static/home/js/moment.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'home/static/home/js/d3-timeline.js' %}"></script>
+<form method="post">
+  {% csrf_token %}
+  <div class="modal-body ">
+    <div class="alert alert-success" role="alert">
+       <h4 class="alert-heading">Configure Data Update</h4>
+    </div>
+    <hr>
+    <span style="font-size: 1em" class="text-secondary">
+      {%with configuration_form as form %}
+      {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
+        {% for fieldset in form.fieldsets %}
+          <fieldset class="{{ fieldset.classes }}">
+          {% if fieldset.legend %}
+            <legend>{{ fieldset.legend }}</legend>
+          {% endif %}
+          {% if fieldset.description %}
+            <p class="description">{{ fieldset.description }}</p>
+          {% endif %}
+          <ul>
+          {% for field in fieldset %}
+            {% if field.is_hidden %}
+              {{ field }}
+            {% else %}
+              <li{{ field.row_attrs }}>
+                {{ field.label_tag }}
+                {{ field }}
+                {% for error in field.errors %}
+                <p class="error-message" style="color:red">
+                  <strong>{{ error|escape }}</strong>
+                </p>
+                {% endfor %}
+              </li>
+            {% endif %}
+          {% endfor %}
+          </ul>
+          </fieldset>
+        {% endfor %}
+      {% endwith %}
+    </span>
+    <h3>Timeline</h3>
+    <div id="timeline3"></div>
+    <div id="hoverRes">
+      <div class="coloredDiv" id="colorBox"></div><br>
+      <div id="timelineLegend"><br><br></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+      <input type="submit" class="btn btn-primary" name="config_prev" value="&#8592 Prev">
+      <input type="submit" class="btn btn-primary" name="config_next" value="Next &#8594">
+  </div>
+</form>
