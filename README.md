@@ -1,13 +1,13 @@
 #### MORUMOTTO
 
-1. [Installation](#Installation)
-    1. [With installer](#METHOD 1 : TL;DR)
-    2. [Manual installation](#METHOD 2 : Manual installation)
-2. [Getting Started](#Getting Started)
-3. [Read the docs](#Read the docs)
+1. Installation
+    1. With installer
+    2. Manual installation
+2. Getting Started
+3. Read the docs
 ## Installation
 
-### METHOD 1 : TL;DR
+### METHOD 1 : With installer
 
 - Step 1, in mysql _(not required, but recommanded)_
 
