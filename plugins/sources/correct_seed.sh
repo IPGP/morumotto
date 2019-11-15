@@ -225,7 +225,7 @@ else
   cp ${INFILE} ${CORRECTED_FILE}
   .log 3 "No encoding/blocksize to change, file simply copied"
 fi
-rm ${INFILE}
+rm -f ${INFILE}
 
 #
 # Demux data and sort them in the appropriate structure.

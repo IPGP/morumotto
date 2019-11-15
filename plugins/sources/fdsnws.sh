@@ -3,7 +3,6 @@
 SCRIPTPATH=$(dirname $0)
 siqacobin="$(dirname $(dirname ${SCRIPTPATH}}))/bin"
 export PATH="${siqacobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
-echo $PATH
 # ************************************************************************#
 #                                                                         #
 #    Copyright (C) 2019 RESIF/IPGP                                        #

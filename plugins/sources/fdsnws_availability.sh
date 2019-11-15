@@ -1,6 +1,8 @@
 #!/bin/bash -e
 # Siqaco plugin to get data availability for the iris FDSN Web Service
-export PATH="${siqacobin}:/usr/local/bin:/usr/bin:/bin"
+SCRIPTPATH=$(dirname $0)
+siqacobin="$(dirname $(dirname ${SCRIPTPATH}}))/bin"
+export PATH="${siqacobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
 # ************************************************************************#
 #                                                                         #
 #    Copyright (C) 2019 RESIF/IPGP                                        #

@@ -183,7 +183,8 @@ class miniSEED(DataFormat):
         returns list of patched files
         """
         nslc_list = [filename.split(os.sep)[-1] for filename in patch_files]
-        for nslc in nslc_list:
+        print("nslc list : ", nslc_list)
+        for nslc in set(nslc_list):
             gap_files_by_chan = [f for f in gap_files if nslc in f.key]
             patch_file_by_chan = [f for f in patch_files if nslc in f]
 
@@ -236,7 +237,7 @@ class miniSEED(DataFormat):
         False otherwise
         """
         st1 = self.read(original_file)
-        
+
         # Testing decompression to check that patch didn't introduce any error
         try:
             st2 = self.read(patched_file)

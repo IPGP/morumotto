@@ -1,6 +1,8 @@
-#!/bin/bash -e
+#!/bin/bash -i
 # Siqaco plugin to create patched files with seed format
-export PATH="/usr/local/bin:/usr/bin:/bin:${siqacobin}"
+SCRIPTPATH=$(dirname $0)
+siqacobin="$(dirname $(dirname ${SCRIPTPATH}}))/bin"
+export PATH="${siqacobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
 # ************************************************************************#
 #                                                                         #
 #    Copyright (C) 2019 RESIF/IPGP                                        #
@@ -32,19 +34,20 @@ GAP_STARTTIME=$4
 GAP_ENDTIME=$5
 QUALITY=$6
 
-echo "start $4 end $5"
+echo "start $4 end $5,"
 MERGE_FILELIST=$(mktemp ${CURRENT_DIR}/merge_XXXXXX.list)
 # 1) Clean data between start and end of gap
 if ! [ ${GAP_FILELIST} == "empty" ]; then
   ORIG_START_FILE=$(mktemp ${CURRENT_DIR}/original_start_XXXXXX.seed)
   ORIG_END_FILE=$(mktemp ${CURRENT_DIR}/original_end_XXXXXX.seed)
-  dataselect -szs -Ps -Pe  -te ${GAP_STARTTIME} -o "${ORIG_START_FILE}" @${GAP_FILELIST}
-  # qmerge -a -T -F ${GAP_FILELIST} -t ${GAP_STARTTIME} -o "${ORIG_START_FILE}" 2>&1 >/dev/null
+  qmerge -a -T -F ${GAP_FILELIST} -t ${GAP_STARTTIME} -o "${ORIG_START_FILE}" 2>&1 >/dev/null
+  # dataselect -szs -Ps -Pe  -te ${GAP_STARTTIME} -o "${ORIG_START_FILE}" @${GAP_FILELIST}
   echo ${ORIG_START_FILE} >> ${MERGE_FILELIST}
-  # qmerge -a -T -F ${GAP_FILELIST} -f ${GAP_ENDTIME} -o "${ORIG_END_FILE}" 2>&1 >/dev/null
-  dataselect -szs -Ps -Pe  -ts ${GAP_ENDTIME} -o "${ORIG_END_FILE}" @${GAP_FILELIST}
+  qmerge -a -T -F ${GAP_FILELIST} -f ${GAP_ENDTIME} -o "${ORIG_END_FILE}" 2>&1 >/dev/null
+  # dataselect -szs -Ps -Pe  -ts ${GAP_ENDTIME} -o "${ORIG_END_FILE}" @${GAP_FILELIST}
   echo ${ORIG_END_FILE} >> ${MERGE_FILELIST}
   # rm -f ${TEMP_FILE}
+
 fi
 
 # 2) Trim patch to fit the gap limits
@@ -53,22 +56,26 @@ fi
 # /!\ Priority : /!\
 while IFS="" read -r line; do
   FILENAME=$(mktemp ${CURRENT_DIR}/patch_XXXXXX.seed)
-  # TEMP_FILE=$(mktemp ${CURRENT_DIR}/temp_XXXXXX.seed)
-  dataselect -szs -Ps -Pe -ts ${GAP_STARTTIME} -te ${GAP_ENDTIME} -o ${FILENAME} ${line}
-  # qmerge -a -T ${line} -f ${GAP_STARTTIME} -o ${TEMP_FILE} 2>&1 >/dev/null
-  # qmerge -a -T ${TEMP_FILE} -t ${GAP_ENDTIME} -o ${FILENAME} 2>&1 >/dev/null
+  TEMP_FILE=$(mktemp ${CURRENT_DIR}/temp_XXXXXX.seed)
+  # dataselect -szs -Ps -Pe -ts ${GAP_STARTTIME} -te ${GAP_ENDTIME} -o ${FILENAME} ${line}
+  qmerge -a -T ${line} -f ${GAP_STARTTIME} -o ${TEMP_FILE}
+  qmerge -a -T ${TEMP_FILE} -t ${GAP_ENDTIME} -o ${FILENAME} 2>&1 >/dev/null
   echo -e ${FILENAME} >> ${MERGE_FILELIST}
-  # rm -f ${TEMP_FILE}
+  rm -f ${TEMP_FILE}
 done < ${PATCH_FILELIST}
 
 # 3) Merge patch from 2 into the cleaned data from 1
 OUTPUT=$(mktemp ${CURRENT_DIR}/XXXXXX.patched.seed)
+PATCH_TMP=$(mktemp -d --tmpdir=${CURRENT_DIR})
 # Split all cleaned patch data into one file per miniSEED record
-dataselect -szs -A %Y.%j.%H.%M.%S.%F.patch @${MERGE_FILELIST}
+# dataselect -szs -A ${PATCH_TMP}/%Y.%j.%H.%M.%S.%F.patch @${MERGE_FILELIST}
+
 # Merge all records, by chronological order into the output file
 # Set the correct quality flag
-dataselect -szs -Q ${QUALITY} -o ${OUTPUT} ????.???.??.??.??.????.patch
-# qmerge -F ${MERGE_FILELIST} -R ${QUALITY} -o ${OUTPUT} 2>&1 >/dev/null
+# dataselect -szs -Q ${QUALITY} -o ${OUTPUT} ${PATCH_TMP}/????.???.??.??.??.????.patch
+# rm -rf ${PATCH_TMP}
+
+qmerge -F ${MERGE_FILELIST} -R ${QUALITY} -o ${OUTPUT} 2>&1 >/dev/null
 
 
 # 4) Check for overlaps and correct them
@@ -82,8 +89,9 @@ if [[ $(tail -1 ${OVERLAPS} | awk '{print $2}') -ne 0 ]]; then
   # HERE : HANDLE OVERLAPS AND LEAP SECONDS
   cd ..
   qmerge ${SDRTEMP_DIR}/* -o ${OUTPUT} 2>&1 >/dev/null
-  dataslect -szs -Ps
-  rm -r ${SDRTEMP_DIR}
+  # dataselect -szs -Ps -o ${OUTPUT} ${SDRTEMP_DIR}/*
+
+  rm -rf ${SDRTEMP_DIR}
 fi
 rm ${OVERLAPS}
 
