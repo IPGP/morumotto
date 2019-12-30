@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+  <title>Morumotto</title>
+  {% include "home/headers/basics.html" %}
+  <script type="text/javascript" src="{% static 'home/static/home/js/moment.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'home/static/home/js/d3-timeline.js' %}"></script>
+</head>
+<body>
+  {% include "home/header.html" %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb ">
+      <li class="breadcrumb-item"><a href="/archive/stack">Stack</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Update Archive</li>
+    </ol>
+  </nav>
+  <div class="container">
+    <div class="row">
+      <div class="col-6">
+        <h2> Update Archive
+        <i class="text-secondary fas fa-info-circle fa-xs" title="Will update automatically
+according to the configuration and also execute all pending requests in stack">
+        </i>
+        </h2>
+        <br>
+
+        <form method="post" id="celery_archive_nojs">
+          {% csrf_token %}
+          <em class="text-secondary"> Window of analysis : </em>
+          <br><br>
+
+
+          <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#collapseWindow" aria-expanded="false" aria-controls="collapseWindow">
+            Configure window size
+          </button>
+          <div class="collapse" id="collapseWindow">
+            <div class="card card-body">
+              {% for field in window_form %}
+                <div class="submit-link-row"><small>{{ field.label_tag }} {{ field }}</small></div><br>
+                {% if monitoring_form.errors %}
+                  {% for error in field.errors %}
+                    <p class="error-message" style="color:red">
+                      <strong>{{ error|escape }}</strong>
+                    </p>
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+
+
+
+
+          <div id="timeline"></div>
+          <div id="hoverRes">
+            <div class="coloredDiv" id="colorBox"></div><br>
+            <div id="timelineLegend"><br><br></div>
+          </div>
+          <br><br>
+
+
+          <div style='float:left'>
+            <a href="/admin/archive/configuration/{{config_id}}/change"
+              class="btn btn-light" role="button">
+              Configuration
+            </a>
+            <input type="submit" class="btn btn-success" value="Update Archive" name="celery_update_archive" id="updateInput">
+          </div>
+          <div style='float:left'>&nbsp;</div>
+
+          {% if display_archive == True %}
+            <br><br><br>
+            <div class="basic">
+              {% include "archive/progress_update.html" %}
+            </div>
+            {% endif %}
+          <br><br>
+        </form>
+      </div>
+
+      <div class="col-1"></div>
+      <div class="col-2">
+        <h2> Stack </h2><br><br>
+        <div style='float:left'>
+
+          <form method="post">
+            {% csrf_token %}
+            <input type="submit" class="btn btn-primary" name="exec_stack"
+            value="Execute Requests" id="stackInput">
+          </form>
+        </div>
+        <div style='float:left'>&nbsp;</div>
+
+        {% if display_stack == True %}
+          <br><br><br>
+          <div class="basic">
+            {% include "archive/progress_stack.html" %}
+          </div>
+        {% endif %}
+      </div>
+      <div class="col-1"></div>
+      <div class="col-2">
+        <h2> Crontab </h2>
+        <br><br>
+        <form method="post">
+          {% csrf_token %}
+          <input type="submit" class="btn btn-primary" name="restart_cronjobs" value="Restart Cronjobs">
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Celery Error Modal -->
+  <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="errorModalLabel">Celery error</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+
+          <div class="alert-celery">
+            <p><i class="fa fa-exclamation-circle"></i> {{ celery_status.ERROR }}</p>
+            <p>
+              1) Try to refresh page <br>
+              2) If refresh doesn't work, restart your Celery deamon and refresh page :
+            </p>
+          </div>
+          <div class="code">$ sudo supervisorctl restart morumotto:morumotto_celery</div><br>
+          <em class="text-secondary">* Update buttons are disabled</em><br>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  {% include "home/footer.html" %}
+
+  <script>
+    function update_value(){
+      drawTimeline()
+    }
+
+    function drawTimeline() {
+      var width = 400;
+      var f_analysis=parseInt(document.getElementById("id_f_analysis").value);
+      var w_analysis=parseInt(document.getElementById("id_w_analysis").value);
+      var l_analysis=parseInt(document.getElementById("id_l_analysis").value);
+      var granularity=document.getElementById("id_granularity_type").value;
+      if (granularity === "daily") {
+          var gran = 3600*24;
+          var unit = "day(s)"
+      } else {
+          var gran = 3600;
+          var unit = "hour(s)"
+      };
+
+      var utcTimestamp = moment.utc().startOf('hour').valueOf()
+      var now = parseInt(utcTimestamp)
+      var windowStart = now-(l_analysis+w_analysis)*gran*1000
+      var newDataStart = now-(l_analysis+f_analysis)*gran*1000
+      var windowEnd = now-l_analysis*gran*1000
+      var windowSize = (l_analysis+w_analysis)
+      var oldData = windowStart - 5*gran*1000
+
+      var windowTimes = [
+       // {label: "Analysis", legend: " Window start", color: "#007bff",
+       //   from: moment(windowStart).format("YYYY/MM/DD HH:mm") ,
+       //   to: moment(newDataStart).format("YYYY/MM/DD HH:mm"),
+       //   times: [{"color":"#007bff",
+       //            "starting_time": windowStart,
+       //            "ending_time": newDataStart}
+       //          ]},
+       // {label: "New", legend: " New data to be analyzed", color: "#ffc107",
+       //   from: moment(newDataStart).format("YYYY/MM/DD HH:mm") ,
+       //   to: moment(windowEnd).format("YYYY/MM/DD HH:mm"),
+       //   times: [{"color":"#ffc107",
+       //            "starting_time": newDataStart,
+       //            "ending_time": windowEnd},
+       //          ]},
+
+        {label: "Window",
+         total_time: "Window length is ".concat(' ',w_analysis,unit),
+         times: [{"color":"#ffc107",
+                  "legend": "Old data. Not updated anymore",
+                  "starting_time": oldData,
+                  "ending_time": windowStart,
+                  "total_time": ""},
+                  {"color":"#28a745",
+                  "legend": " Data to be updated",
+                  "starting_time": windowStart,
+                  "ending_time": newDataStart,
+                  "total_time":
+                    "Length: ".concat(' ', w_analysis-f_analysis,' ', unit), },
+                  {"color":"#84e19a",
+                   "legend": " New data",
+                   "starting_time": newDataStart,
+                   "ending_time": windowEnd,
+                   "total_time":
+                    "Length: ".concat(' ', f_analysis, ' ', unit), },
+                ]},
+       {label: "Latency",
+         times: [{"color":"#e9ecef",
+                  "legend": "Latency of analysis",
+                  "starting_time": windowEnd,
+                  "ending_time": now,
+                  "total_time": "Length: ".concat(' ',l_analysis,' ', unit)},
+                ]}
+      ];
+
+
+      var chart = d3.timeline()
+        // .relativeTime()
+        // .beginning(windowStart)
+        // .ending(now)
+        // .rotateTicks(15)
+        // .showTimeAxisTick()
+        .tickFormat({
+          format: function(d) { return d3.time.format.utc("%m/%d %H:%M")(d) },
+          tickTime: d3.time.scale,
+           // tickInterval: 4*windowSize,
+           numTicks: 3,
+           tickSize: 12,
+        })
+        // .width(width*2)
+        .stack()
+        .margin({left:80, right:40, top:0, bottom:0})
+        .click(function (d, i, datum) {
+        // d is the current rendering object
+        // i is the index during d3 rendering
+        // datum is the id object
+          var div = $('#hoverRes');
+          div.find('.coloredDiv').css('background-color',d.color)
+          if (d.starting_time != oldData){
+            div.find('#timelineLegend').text(d.legend + ". From: " +
+            moment.utc(d.starting_time).format("YYYY/MM/DD HH:mm") +
+            " to: " + moment.utc(d.ending_time).format("YYYY/MM/DD HH:mm")
+             + ". " + d.total_time );
+             document.getElementById("timelineLegend").style.marginBottom = "0px";
+           }
+          else {
+            div.find('#timelineLegend').text(d.legend)
+            document.getElementById("timelineLegend").style.marginBottom = "24px";
+
+          }
+        })
+
+      d3.select('#timeline').selectAll('svg').remove()
+      var svg = d3.select("#timeline").append("svg").attr("width", width)
+        .datum(windowTimes).call(chart);
+
+
+
+    }
+
+
+
+
+    $(document).ready(function() {
+      $("#updateBtn").addClass("active");
+      $("#updateDd").addClass("active");
+      $("#logDd").attr("href","/admin/logdb/updatelog/")
+      drawTimeline();
+      {% if celery_status.ERROR %}
+         $("#stackInput").attr("disabled", "disabled");
+         $("#updateInput").attr("disabled", "disabled");
+         $('#errorModal').modal('show')
+      {% endif %}
+
+      $('.has-popover').tooltip({'trigger':'hover'});
+
+    });
+
+
+
+  </script>
+  </body>
+</html>

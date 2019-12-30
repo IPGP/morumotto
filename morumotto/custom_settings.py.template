@@ -1,0 +1,24 @@
+# Uncomment your RDBMS section, then save file as custom_settings.py
+
+# ----------- MYSQL -----------
+
+# DATABASE_ENGINE = 'django.db.backends.mysql'
+# DATABASE_NAME = 'db_name'
+# DATABASE_USER_NAME = 'user'
+# DATABASE_PASSWORD = 'pwd'
+# DATABASE_HOST = '127.0.0.1'
+# CUSTOM_HOSTS = ["1.2.3.4",""]
+
+# OPTIONS = {
+#            "charset": "utf8",
+#            "init_command": "SET foreign_key_checks = 0;"
+#           }
+
+# --------- POSTGRESQL --------
+
+# DATABASE_ENGINE = 'django.db.backends.postgresql'
+# DATABASE_NAME = 'db_name'
+# DATABASE_USER_NAME = 'user'
+# DATABASE_PASSWORD = 'pwd'
+# DATABASE_HOST = '127.0.0.1'
+# CUSTOM_HOSTS = ["10.2.5.68",""]

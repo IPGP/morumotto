@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <script src="{% static 'celery_progress/celery_progress.js' %}"></script>
+</head>
+<body>
+
+  <div class='progress'>
+    <div id='progress-bar' role='progressbar'>&nbsp;</div>
+  </div>
+  <div id="progress-bar-message">Executing Stack...</div>
+
+<script>
+
+  function customProgress(progressBarElement, progressBarMessageElement, progress) {
+    progressBarElement.style.backgroundColor = '#68a9ef';
+    progressBarElement.style.width = progress.percent + "%";
+    progressBarMessageElement.innerHTML = 'Executing stack : (' + progress.current + '/' + progress.total +' requests proceeded)';
+  }
+
+  function customSuccess(progressBarElement, progressBarMessageElement) {
+      progressBarElement.style.backgroundColor = '#76ce60';
+      progressBarMessageElement.innerHTML = "All request processed ! <a href='/monitoring/update_stats'>You may now update statistics</a>";
+  }
+
+  function customError(progressBarElement, progressBarMessageElement) {
+    progressBarElement.style.backgroundColor = '#e05260';
+      progressBarMessageElement.innerHTML = "An error has occured, see log : <a href='/admin/logdb/statuslog/'>Software Log</a>";
+  }
+
+  var progressUrl = "{% url 'celery_progress:task_status' task_id_stack %}";
+  $(function () {
+    CeleryProgressBar.initProgressBar(progressUrl, {
+        onProgress: customProgress,
+        onSuccess: customSuccess,
+        onError: customError,
+    });
+  });
+</script>
+
+</body>
+</html>

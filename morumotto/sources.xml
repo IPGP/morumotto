@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<django-objects version="1.0">
+    <object model="archive.source" pk="1">
+        <field name="name" type="CharField">IPGP_FDSNWS</field>
+        <field name="priority" type="PositiveIntegerField">1</field>
+        <field name="log_level" type="IntegerField">3</field>
+        <field name="parameters" type="CharField">ws.ipgp.fr</field>
+        <field name="limit_rate" type="IntegerField">0</field>
+        <field name="type" type="CharField">FdsnWS</field>
+        <field name="is_online" type="BooleanField">False</field>
+        <field name="availability" type="BooleanField">True</field>
+        <field name="nslc" rel="ManyToManyRel" to="archive.nslc">
+	    <object pk="1"></object>
+	</field>
+    </object>
+</django-objects>

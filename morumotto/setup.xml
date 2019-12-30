@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<django-objects version="1.0">
+    <object model="archive.configuration" pk="1">
+        <field name="config_name" type="CharField">SIQACO_CONFIG</field>
+        <field name="archive" type="CharField">/path/to/your/final_archive</field>
+        <field name="data_format" type="CharField">miniSEED</field>
+        <field name="struct_type" type="CharField">SDS</field>
+        <field name="blocksize" type="PositiveSmallIntegerField">4096</field>
+        <field name="compression_format" type="CharField">STEIM2</field>
+        <field name="quality_label" type="CharField">M</field>
+        <field name="request_lifespan_type" type="CharField">n</field>
+        <field name="request_lifespan" type="PositiveSmallIntegerField">30</field>
+        <field name="n_request" type="PositiveSmallIntegerField">10</field>
+        <field name="max_gaps_by_analysis" type="PositiveSmallIntegerField">10</field>
+        <field name="initialisation" type="BooleanField">False</field>
+        <field name="debug_mode" type="BooleanField">False</field>
+        <field name="crontab_status" type="BooleanField">False</field>
+        <field name="granularity_type" type="CharField">hourly</field>
+        <field name="f_analysis" type="PositiveSmallIntegerField">1</field>
+        <field name="w_analysis" type="PositiveSmallIntegerField">5</field>
+        <field name="l_analysis" type="PositiveSmallIntegerField">24</field>
+    </object>
+    <object model="monitoring.archivemonitoring" pk="1">
+        <field name="archive" type="CharField">/path/to/your/final_archive</field>
+        <field name="start_year" type="IntegerField">2018</field>
+        <field name="end_year" type="IntegerField">2019</field>
+        <field name="data_format" type="CharField">miniSEED</field>
+        <field name="struct_type" type="CharField">SDS</field>
+    </object>
+    <object model="qualitycontrol.qcconfig" pk="1">
+        <field name="archive" type="CharField">/path/to/your/final_archive</field>
+        <field name="metadata_format" type="CharField">DatalessSEED</field>
+    </object>
+
+</django-objects>

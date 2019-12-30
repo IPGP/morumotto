@@ -1,0 +1,85 @@
+{% load static %}
+<div class="modal fade" tabindex="-1" role="dialog" id="importNSLC">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-primary">
+          <i class="fas fa-arrow-circle-down"></i>
+          Import NSLC
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body ">
+        <div class="alert alert-success" role="alert">
+           <h4 class="alert-heading">Import N.S.L.C</h4>
+        </div>
+        <hr>
+
+        <div class="tabbable">
+          <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" href="#StationXML" data-toggle="tab" role="tab" >StationXML</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#fdsn" data-toggle="tab" aria-selected="true" role="tab" >FDSN Webservice</a>
+            </li>
+          </ul>
+          <br>
+          <div class="tab-content">
+            <div class="tab-pane fade" id="fdsn" role="tabpanel">
+              <ul class="nav ">
+                <div class="panel">
+                  <form method="post" id="nslc_form_1">
+                    {% csrf_token %}
+                    <b>Get NSLC from a FDSN Webservice (online only)</b><br><br>
+                      {{ ws_form.as_p }}
+                      <input type="submit" class="btn btn-sm btn-success" value="Use webservice"
+                      name="nslc_fdsn" data-toggle="tooltip" data-placement="right"
+                      title="Will get all N.S.L.C. codes (no data) available for the network(s)
+                      that you have previously entered">
+                  </form>
+                  <br>
+              </ul>
+            </div>
+            <div class="tab-pane fade show active" id="StationXML" role="tabpanel">
+              <ul class="nav">
+                <div class="panel">
+                  <form method="post" enctype="multipart/form-data" id="nslc_form_2">
+                    {% csrf_token %}
+                    <b>Get NSLC from a StationXML file</b><br><br>
+                      {{ file_form.as_p }}
+                      <input type="submit" class="btn btn-sm btn-success" value="Use file" name="nslc_file">
+                      <br><br><br><br><br><br>
+                  </form>
+                </div>
+             </ul>
+            </div>
+          </div>
+        </div>
+        <div id="dialog"></div>
+        {% if messages %}
+          {% for message in messages %}
+            {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+              <h6 class="text-success"><b>{{ message }}</b></h6>
+            {% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+              <h6 class="text-danger"><b>{{ message }}</b></h6>
+            {% endif %}
+          {% endfor %}
+          <!-- <ul class="messages">
+              {% for message in messages %}
+                <li  {% if message.tags %} class=" {{ message.tags }} " {% endif %}> {{ message }} </li>
+              {% endfor %}
+          </ul> -->
+        {% endif %}
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

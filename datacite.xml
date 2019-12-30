@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://datacite.org/schema/kernel-4" xsi:schemaLocation="http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4.1/metadata.xsd">
+  <identifier identifierType="DOI">???????????????????????</identifier>
+  <creators>
+    <creator>
+      <creatorName>RESIF / IPGP</creatorName>
+    </creator>
+  </creators>
+  <titles>
+    <title>Morumotto</title>
+  </titles>
+  <publisher>Zenodo</publisher>
+  <publicationYear>2020</publicationYear>
+  <subjects>
+    <subject>seismology</subject>
+    <subject>miniSEED</subject>
+    <subject>Python</subject>
+    <subject>ObsPy</subject>
+    <subject>QualityControl</subject>
+    <subject>DataValidation</subject>
+    <subject>StationXML</subject>
+    <subject>FDSN</subject>
+  </subjects>
+  <dates>
+    <date dateType="Issued">2020-??-??</date>
+  </dates>
+  <resourceType resourceTypeGeneral="Software"/>
+  <rightsList>
+    <rights rightsURI="https://opensource.org/licenses/GPL-3.0">GNU General Public License v3.0</rights>
+  </rightsList>
+  <descriptions>
+    <description descriptionType="Abstract">&lt;p&gt;Morumotto: MOdular aRchive bUilder from Multiple Origin Temporal Traces (and Other stuff)&lt;/p&gt;
+      Morumotto is a tool that automatically fills a seismic data archive, corrects overlaps and requests data to fill the gaps. Data are regularly fetched from a pool of different sources. It also performs data quality control.
+      This software is to be used by network operators. It provides a web interface and a command line interface.
+      The software was designed to be able to integrate new sources plugins (to be able to fit any kind of Seismic Network) and new data format/structure in the future.
+    </description>
+    <description descriptionType="People">
+      {"People": Olivier Geber, Constanza Pardo, Jean-Marie Saurel, Arnaud Lemarchand, Philippe Kowalski, Nicolas Leroy, El-Madani Aissaoui, Claudio Satriano}
+    </description>
+  </descriptions>
+</resource>
