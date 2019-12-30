@@ -1,6 +1,5 @@
 #!/bin/bash -e
-# Siqaco plugin to get data availability for the iris FDSN Web Service
-export PATH="${siqacobin}:/usr/local/bin:/usr/bin:/bin"
+# Morumotto plugin to get data availability from local directory
 # ************************************************************************#
 #                                                                         #
 #    Copyright (C) 2019 RESIF/IPGP                                        #
@@ -15,7 +14,7 @@ export PATH="${siqacobin}:/usr/local/bin:/usr/bin:/bin"
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        #
 #    GNU General Public License for more details.                         #
 #                                                                         #
-#    This program is part of 'Projet SiQaCo'.                             #
+#    This program is part of 'Morumotto'.                                 #
 #    It has been financed by RESIF (Réseau sismologique & géodésique      #
 #    français )                                                           #
 #                                                                         #
@@ -27,10 +26,14 @@ export PATH="${siqacobin}:/usr/local/bin:/usr/bin:/bin"
 #
 # * LOGS:
 #
-# Siqaco will create a log file from the outputs of the plugin. Please use
+# Morumotto will create a log file from the outputs of the plugin. Please use
 # the .log funcion when you write your outputs, instead of echo
 #
 # ------------------------------------------------------------------------------
+SCRIPTPATH=$(dirname $0)
+morumottobin="$(dirname $(dirname ${SCRIPTPATH}}))/bin"
+export PATH="${morumottobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
+check_requirements.sh
 
 echo $@
 set -o history -o histexpand # only for dev: echo !! prints last command line
@@ -90,7 +93,6 @@ if [ "$#" -gt 4 ] || [ -z "$1" ]; then
   exit 1
 fi
 
-
 # Verbose
 declare -A LOG_LEVELS
 LOG_LEVELS=([1]="err" [2]="warning" [3]="debug")
@@ -102,7 +104,7 @@ function .log () {
   fi
 }
 
-# Convert wget exit code to exit status understandable by SiQaCo
+# Convert wget exit code to exit status understandable by Morumotto
 # See doc of wget for exit status :
 # https://www.gnu.org/software/wget/manual/html_node/Exit-Status.html
 function convert_exit() {
@@ -187,7 +189,6 @@ if [ ! -d "${WORKSPACE}/AVAILABILITY" ]; then
   .log 3 "${WORKSPACE}/AVAILABILITY created"
 fi
 
-
 # 1. Get PATH
 SOURCE_DIR=$(echo ${CONNECT_INFOS} | awk -F '[:?=&]' '{print $2}')
 .log 3 "Source directory: "${SOURCE_DIR}
@@ -199,8 +200,6 @@ if [ "${LIMIT_RATE}" = "" ]; then
 fi
 .log 3 "Limit rate: ${LIMIT_RATE}"
 
-# FILENAME="${POSTFILE/"post."/""}"
-# .log 3 "Filename: ${FILENAME}"
 AVAILFILENAME="$(basename ${POSTFILE/"post."/""})"
 FILENAME="${WORKSPACE}/AVAILABILITY/${AVAILFILENAME}"
 
@@ -287,10 +286,6 @@ while IFS= read -r line; do
     fi
     for FILE in ${FILE_ARRAY[@]}; do
       if [ -f ${FILE} ];then
-        # net=$(msi -tf 1 -T ${FILE} | grep -v "Source\|Total" | awk '{print $1}' | cut -d'_' -f1)
-        # sta=$(msi -tf 1 -T ${FILE} | grep -v "Source\|Total" | awk '{print $1}' | cut -d'_' -f2)
-        # loc=$(msi -tf 1 -T ${FILE} | grep -v "Source\|Total" | awk '{print $1}' | cut -d'_' -f3)
-        # chan=$(msi -tf 1 -T ${FILE} | grep -v "Source\|Total" | awk '{print $1}' | cut -d'_' -f4)
         MSI_FILE=$(mktemp ${WORKSPACE}/AVAILABILITY/msi_output_XXXXXXXX)
         msi -T -tf 1 ${FILE} | tr -s " " >> ${MSI_FILE}
         while IFS= read -r line; do

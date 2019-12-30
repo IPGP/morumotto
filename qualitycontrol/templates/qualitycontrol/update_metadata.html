@@ -31,6 +31,17 @@
           <form method="post">
             {% csrf_token %}
             {{ws_form.as_p}}
+            {% if messages %}
+              {% for message in messages %}
+                <h6 class="text-danger"><b>{{ message }}</b></h6>
+              {% endfor %}
+            {% endif %}
+
+            <em class="text-secondary">
+              This will automatically fetch all metadata available for all NSLC in your database.
+              <a href="/admin/archive/nslc/">Change NSLC here</a>
+            </em>
+            <br><br>
             <input type="submit" class="btn btn-sm btn-primary" name="ws_update" value="Submit">
           </form>
           <br><br>
@@ -38,12 +49,15 @@
           <form method="post">
             {% csrf_token %}
             {{svn_form.as_p}}
+
             <input type="submit" class="btn btn-sm btn-primary" name="svn_update" value="Submit">
           </form>
           <br>
-          <em class="text-secondary">* Note: When you will click on Submit,
+          <em class="text-secondary">
+            * Note: When you will click on Submit,
             the crontab will be uploaded, so that metadata are uploaded each day at
-            midnight with the chosen method</em>
+            midnight with the chosen method
+          </em>
           <br>
         </div>
       </div>

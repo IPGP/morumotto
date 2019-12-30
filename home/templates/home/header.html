@@ -1,6 +1,6 @@
 {% load static %}
 {% load git_ver %}
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary" id="topNavbar">
+<nav class="navbar navbar-expand-lg sticky-top  navbar-dark bg-primary" id="topNavbar">
 
   <a class="navbar-brand " href="/home">
     <!-- <i class="fas fa-seedling"></i>  -->
@@ -20,18 +20,21 @@
     <ul class="navbar-nav mr-auto">
 
       <li class="nav-item">
-        <a class="nav-link" href="/home" id="homeBtn"><i class="fas fa-home"></i> Home</a>
+        <a class="nav-link" href="/home" id="homeBtn">
+          <!-- <i class="fas fa-home"></i> -->
+          Home</a>
       </li>
 
       <!-- <li class="nav-item" id="updateBtn">
-        <a class="nav-link" href="/seismicarchive/update" id="updateDd">
+        <a class="nav-link" href="/archive/update" id="updateDd">
           <i class="fa fa-sync"></i>  Update Archive
         </a>
       </li> -->
 
       <li class="nav-item dropdown" id="monitBtn">
         <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-          <i class="fa fa-chart-pie"></i> Monitoring
+          <!-- <i class="fa fa-chart-pie"></i>  -->
+          Monitoring
         </a>
         <div class="dropdown-menu">
           <a class="dropdown-item" href="/monitoring/netgaps" id="netGapsDd">Network Gaps</a>
@@ -49,28 +52,30 @@
           <i class="fa fa-sync"></i>  Update
         </a>
         <div class="dropdown-menu">
-          <a class="dropdown-item" href="/seismicarchive/update" id="updateDd">Update Archive</a>
-          <a class="dropdown-item" href="/seismicarchive/update" id="directDd">Manual Update</a>
+          <a class="dropdown-item" href="/archive/update" id="updateDd">Update Archive</a>
+          <a class="dropdown-item" href="/archive/update" id="directDd">Manual Update</a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="/seismicarchive/update" id="cronDd">Crontab</a>
+          <a class="dropdown-item" href="/archive/update" id="cronDd">Crontab</a>
         </div>
       </li> -->
 
       <li class="nav-item dropdown" id="stackBtn">
         <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-          <i class="fa fa-layer-group"></i> Stack
+          <!-- <i class="fa fa-layer-group"></i>  -->
+          Stack
         </a>
         <div class="dropdown-menu">
-          <a class="dropdown-item" href="/seismicarchive/stack" id="stackDd">Stack Visualisation</a>
+          <a class="dropdown-item" href="/archive/stack" id="stackDd">Stack Visualisation</a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="/seismicarchive/newrequest" id="requestDd">New Request</a>
-          <a class="dropdown-item" href="/seismicarchive/update" id="updateDd">Update Archive</a>
+          <a class="dropdown-item" href="/archive/newrequest" id="requestDd">New Request</a>
+          <a class="dropdown-item" href="/archive/update" id="updateDd">Update Archive</a>
         </div>
       </li>
 
       <li class="nav-item dropdown" id="qcBtn">
         <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-          <i class="fas fa-check-double"></i> Quality Control
+          <!-- <i class="fas fa-check-double"></i>  -->
+          Quality Control
         </a>
         <div class="dropdown-menu">
           <a class="dropdown-item" href="/qualitycontrol/" id="qcMenuDd">Menu</a>
@@ -81,9 +86,9 @@
           <a title="Not available yet" class="dropdown-item text-danger" href="/qualitycontrol/check_metadata" id="checkMdDd">Check MetaData</a>
           <a class="dropdown-item" href="/qualitycontrol/map_stations" id="stationsDd">Stations location</a>
           <a class="dropdown-item" href="/qualitycontrol/plot_response" id="responseDd">Plot Response files</a>
-          <a title="Not available yet" class="dropdown-item text-danger" href="/qualitycontrol/metadata_vs_data" id="checkMdVsDataDd">Check Metadata VS Data</a>
-          <a title="Not available yet" class="dropdown-item text-danger" href="/qualitycontrol/check_data" id="dataDd">Check Data</a>
-          <a title="Not available yet" class="dropdown-item text-danger" href="/qualitycontrol/plot_completion" id="completionDd">Plot Completion</a>
+          <a class="dropdown-item text-danger" title="Not available yet" href="/qualitycontrol/metadata_vs_data" id="checkMdVsDataDd">Check Metadata VS Data</a>
+          <a class="dropdown-item text-danger" title="Not available yet" href="/qualitycontrol/check_data" id="dataDd">Check Data</a>
+          <a class="dropdown-item" title="Not available yet" href="/qualitycontrol/plot_completion" id="completionDd">Plot Completion</a>
         </div>
       </li>
 
@@ -109,10 +114,10 @@
         <a class="nav-link" href='{% static "/docs/user_guide.html" %}'><i class="fas fa-book"></i> Docs</a>
       </li> -->
 
-      <li class="nav-item">
-        <!-- <a class="nav-link" href="https://k2.ipgp.fr/geber/siqaco"><i class="fab fa-gitlab"></i> GitLab ( {% git_ver %} )</a> -->
-        <!-- <a class="nav-link" href="https://github.com/IPGP/siqaco"><i class="fab fa-github"></i> Github </a> -->
-      </li>
+      <!-- <li class="nav-item">
+        <a class="nav-link" href="https://k2.ipgp.fr/geber/siqaco"><i class="fab fa-gitlab"></i> GitLab ( {% git_ver %} )</a>
+        <a class="nav-link" href="https://github.com/IPGP/siqaco"><i class="fab fa-github"></i> Github </a>
+      </li> -->
 
 
       {% if user.is_authenticated %}
@@ -126,6 +131,7 @@
               <a class="dropdown-item" href="/admin/logdb/" id="logDd">Logs</a>
               <a class="dropdown-item" href="/flower" id="flowerDd">Flower (Celery monitor)</a>
               <a class="dropdown-item" href="/home/init_welcome" id="initDd">Initialisation</a>
+              <a class="dropdown-item" href="/home/import_nslc" id="importDd">Import NSLC</a>
               <a class="dropdown-item" href="/admin" id="adminDd">Admin Page</a>
               <div class="dropdown-divider"></div>
             {% else %}
@@ -154,20 +160,20 @@
     </ul>
   </div>
 </nav>
+
+{% include "home/import_nslc.html" %}
+
 <script>
   $(document).ready(function() {
     // $("#theme_id").attr("href", "{%  static 'home/css/bootstrap_solar.min.css' %}")
     {% if not user.is_authenticated %}
-      // $("#updateStatsDd").attr({"class":"dropdown-item"});
-      // $("#updateDd").attr({"class":"dropdown-item"});
-      // $("#requestDd").attr({"class":"dropdown-item"});
-      // $("#initDd").attr({"class":"dropdown-item"});
-      // $("#updateMdDd").attr({"class":"dropdown-item"});
-      $("#updateStatsDd").attr({"class":"dropdown-item text-secondary","title":"Requests login"});
-      $("#updateDd").attr({"class":"dropdown-item text-secondary","title":"Requests login"});
-      $("#requestDd").attr({"class":"dropdown-item text-secondary","title":"Requests login"});
-      $("#initDd").attr({"class":"dropdown-item text-secondary","title":"Requests login"});
-      $("#updateMdDd").attr({"class":"dropdown-item text-secondary","title":"Requests login"});
+
+      $("#updateStatsDd").attr({"class":"dropdown-item text-secondary","title":"Requires login"});
+      $("#updateDd").attr({"class":"dropdown-item text-secondary","title":"Requires login"});
+      $("#requestDd").attr({"class":"dropdown-item text-secondary","title":"Requires login"});
+      $("#initDd").attr({"class":"dropdown-item text-secondary","title":"Requires login"});
+      $("#importDd").attr({"class":"dropdown-item text-secondary","title":"Requires login"});
+      $("#updateMdDd").attr({"class":"dropdown-item text-secondary","title":"Requires login"});
 
     {% endif %}
 

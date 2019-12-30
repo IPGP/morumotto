@@ -48,7 +48,6 @@
 
     <script type="text/javascript">
 
-
         function get_template() {
           var pluginField = document.getElementById("id_type").value;
           {% for key, val in parameters.items %}
@@ -199,6 +198,23 @@
              data: $('#closeModal').serialize()
            })
          });
+
+         {% if import %}
+            $("#importNSLC").modal('show');
+         {% endif %}
+         $('#importNSLC').on('hidden.bs.modal', function (e) {
+           var pageURL = window.location.href.split("/home")[0];
+           newPageURL = pageURL + "/home";
+           window.location.replace(newPageURL)
+         })
+         // {% if messages %}
+         //   {% for message in messages %}
+         //     alert('{{ message }}');
+         //   {% endfor %}
+         // {% endif %}
+
+
+         // $("#id_crontime").data("DateTimePicker").minDate(new Date());
 
 
        });

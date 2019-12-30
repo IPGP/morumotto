@@ -3,7 +3,7 @@
 <html>
   <head>
     <title>Morumotto</title>
-    {% include "home/headers/basics.html" %}
+    {% include "home/headers/datepicker.html" %}
   </head>
 
   <body>
@@ -25,7 +25,7 @@
                 <div class="submit-link-row">
                   <h6><b>{{ field.label_tag }}</b></h6>
                   {{ field }}
-                  <br>
+                  <br><br>
                 </div>
                 {% if form.errors %}
                   {% for error in field.errors %}
@@ -35,7 +35,7 @@
                   {% endfor %}
                 {% endif %}
               {% endfor %}
-              <br>
+
               <input type="submit" class="btn btn-sm btn-primary"  name="plot_resp" value="Plot Response">
             </form>
           </div>

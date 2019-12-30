@@ -46,6 +46,11 @@
       <div class="coloredDiv" id="colorBox"></div><br>
       <div id="timelineLegend"><br><br></div>
     </div>
+    <hr>
+    <em class="text-secondary small"> (*) Morumotto analyses data in final archive to list all gaps. For each
+      gap, it will create a request that will fetch data from several sources over a time window defined by
+      the user. In case of failure, the request status will be placed to retry, and next time the software
+      runs, it will be executed, until its number of retry is over (= lifespan)
   </div>
   <div class="modal-footer">
       <input type="submit" class="btn btn-primary" name="config_prev" value="&#8592 Prev">

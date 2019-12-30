@@ -2,7 +2,7 @@
 from datetime import datetime
 from django.db import models
 from django.utils.timezone import now
-from seismicarchive.models import Network, Station, DataFile
+from archive.models import Network, Station, DataFile
 from plugins.choices import get_plugin_choices
 import importlib
 import logging

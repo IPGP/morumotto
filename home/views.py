@@ -8,16 +8,17 @@ from datetime import datetime
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponseNotFound
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from obspy.clients.fdsn import Client as fdsnClient
 from .initialisation import nslc_from_webservice, nslc_from_stationxml
 from .forms import ConfigurationForm, SourceForm, NetworkModelFormset, \
     WebServiceForm, ArchiveMonitoringInitForm, StationXMLForm, QCConfigInitForm
-from seismicarchive.models import Configuration, Network, Station, Source, NSLC
+from archive.models import Configuration, Network, Station, Source, NSLC
 from qualitycontrol.models import QCConfig
 from monitoring.models import ArchiveMonitoring, Component
-from siqaco import tasks, cronjobs
+from morumotto import tasks, cronjobs
 from plugins.choices import get_plugin_choices
-import siqaco.toolbox as toolbox
+import morumotto.toolbox as toolbox
 # from django_celery_beat.models import PeriodicTask
 
 logger = logging.getLogger('Status')
@@ -38,7 +39,7 @@ CRON_LOG = os.path.join(BASE_DIR, "WORKING_DIR", "LOG","cron.log")
 
 def go_to_home(request):
     # Redirects the root "/" page to home
-    # See in siqaco/urls.py
+    # See in morumotto/urls.py
     return HttpResponseRedirect("home")
 
 
@@ -53,7 +54,7 @@ def about(request):
 
 def documentation_redirect(request):
     return HttpResponseNotFound("Sorry, docs not available yet :'(")
-    # return HttpResponseRedirect('https://readthedocs.org/projects/siqaco')
+    # return HttpResponseRedirect('https://readthedocs.org/projects/morumotto')
 
 
 def index(request):
@@ -123,43 +124,6 @@ def init_welcome(request):
     return render(request, 'home/index.html', context)
 
 
-# def init_networks(request):
-#     # Backend for the Networks modal
-#     if Configuration.objects.count() == 0:
-#         configuration = Configuration()
-#         configuration.save()
-#     config = Configuration.objects.first()
-#
-#     context = {"initialise": True}
-#     context["modal"] = "networks"
-#
-#     if(request.POST.get("networks_next")):
-#         network_formset = NetworkModelFormset(request.POST)
-#         if network_formset.is_valid():
-#             for form in network_formset:
-#                 # extract name from each form and save
-#                 name = form.cleaned_data.get('name')
-#                 net_list = sorted(set(Network.objects.values_list('name', flat=True)))
-#                 # We don't want to have two networks with the same name
-#                 if (name != None and name not in net_list):
-#                     form.save()
-#             # When user has added new networks, we add them to the configuration
-#             for net in Network.objects.all():
-#                 if not config.networks.filter(pk=net.pk).exists():
-#                     logger.info("adding network %s to cnfig" %net)
-#                     config.networks.add(net)
-#                     config.save()
-#             return HttpResponseRedirect('init_nslc')
-#     else:
-#         network_formset = NetworkModelFormset(None)
-#
-#     if(request.POST.get("networks_prev")):
-#         return HttpResponseRedirect('init_welcome')
-#
-#     context["network_formset"] = network_formset
-#     return render(request, 'home/index.html', context)
-
-
 @login_required
 def init_nslc(request):
     if Configuration.objects.count() == 0:
@@ -205,6 +169,8 @@ def init_nslc(request):
             filename = request.FILES['stationxmlfile']
             try:
                 nslc_from_stationxml(filename,config)
+            except lxml.etree.XMLSyntaxError:
+                logger.exception("No data found for request")
             except:
                 logger.exception("Wrong format for StationXML file")
 
@@ -219,6 +185,75 @@ def init_nslc(request):
         return HttpResponseRedirect("init_welcome")
 
     return render(request, 'home/index.html', context)
+
+
+@login_required
+def import_nslc(request):
+    if Configuration.objects.count() == 0:
+        configuration = Configuration()
+        configuration.save()
+    config = Configuration.objects.first()
+
+    context = {"initialise": False}
+    context["import"] = True
+    context["ws_form"] = WebServiceForm()
+    context["file_form"] = StationXMLForm()
+
+    nslc_list = list()
+    # Backend for the NSLC Initialisation modal
+    if(request.POST.get("nslc_fdsn")):
+        ws_form = WebServiceForm(request.POST)
+        if ws_form.is_valid():
+            client = ws_form.cleaned_data.get('name')
+            custom_url = ws_form.cleaned_data.get('custom_url')
+            network_str = ws_form.cleaned_data.get('networks')
+            networks = list(network_str.split(","))
+            for network in networks:
+                net, created = Network.objects.get_or_create(name = network)
+                if not config.networks.filter(pk=net.pk).exists():
+                    logger.info("adding network %s to config" %net)
+                    config.networks.add(net)
+                    config.save()
+            if custom_url:
+                try:
+                    nslc_list = nslc_from_webservice(
+                              fdsnClient(str(custom_url)), config)
+                    if nslc_list:
+                        messages.success(request, 'NSLC import successfull !')
+                    else:
+                        messages.error(request, 'NSLC import failed !')
+                except:
+                    logger.exception("Webservice not available")
+                    messages.error(request, 'NSLC import failed !')
+            else:
+                try:
+                    nslc_list = nslc_from_webservice(
+                              fdsnClient(str(client)), config)
+                    if nslc_list:
+                        messages.success(request, 'NSLC import successfull !')
+                    else:
+                        messages.error(request, 'NSLC import failed !')
+                except:
+                    logger.exception("Webservice not available")
+                    messages.error(request, 'NSLC import failed !')
+
+
+    elif(request.POST.get('nslc_file')):
+        form = StationXMLForm(request.POST,request.FILES)
+        if form.is_valid():
+            print("form valid")
+            filename = request.FILES['stationxmlfile']
+            try:
+                nslc_list = nslc_from_stationxml(filename,config)
+                if nslc_list:
+                    messages.success(request, 'NSLC import successfull !')
+                else:
+                    messages.error(request, 'NSLC import failed !')
+            except:
+                logger.exception("Wrong format for StationXML file")
+                messages.error(request, 'NSLC import failed !')
+    return render(request, 'home/index.html', context)
+
 
 
 @login_required
@@ -278,6 +313,7 @@ def init_config(request):
         configuration_form = ConfigurationForm(request.POST, instance=config)
         if configuration_form.is_valid():
             config = configuration_form.save()
+            print("ok")
             return HttpResponseRedirect("init_monitoring")
         else:
             logger.exception("errors :",configuration_form.errors)
@@ -317,7 +353,7 @@ def init_monitoring(request):
             if not Network.objects.count():
                 data_structure = monit.get_data_structure()
                 nslc_list = data_structure.nslc_from_archive(archive)
-                print("nslc_list", nslc_list)
+                # print("nslc_list", nslc_list)
                 for nslc in nslc_list:
                     n,s,l,c = nslc.split(".")
                     net, created = Network.objects.get_or_create(name = n)
@@ -409,14 +445,16 @@ def init_finish(request):
             config.initialisation = False
 
             #double check
-            for nslc in NSLC.objects.all():
-                if not config.nslc.filter(pk=nslc.pk).exists():
-                    config.nslc.add(nslc)
-                    config.save()
+            for net in Network.objects.all():
+                config.networks.add(net)
+                config.save()
             for sta in Station.objects.all():
-                if not config.stations.filter(pk=sta.pk).exists():
-                    config.stations.add(sta)
-                    config.save()
+                config.stations.add(sta)
+                config.save()
+
+            for nslc in NSLC.objects.all():
+                config.nslc.add(nslc)
+                config.save()
 
             config.save()
         logger.info("Initialisation done")

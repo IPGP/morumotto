@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand, CommandError
 from monitoring.models import ArchiveMonitoring
-from seismicarchive.models import NSLC, Network, Station, Location, Channel
+from archive.models import NSLC, Network, Station, Location, Channel
 from monitoring import update_monitoring
 import logging
 

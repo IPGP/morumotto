@@ -1,46 +1,79 @@
 <div class="modal-body ">
-  <form method="post" id="nslc_form_1">
-    {% csrf_token %}
-    <div class="alert alert-success" role="alert">
-       <h4 class="alert-heading">Initialise N.S.L.C</h4>
-       Use one of the following methods
-    </div>
-    <hr>
-    {% if warning %}
-    <div class="alert">
-      <p class="error-message" style="color:red">
-        <i class="fa fa-exclamation-circle">
-          No NSLC found
-        </i>
-        <br>
-        <small><i>
-          Suggestions: <br><br>
-          - To use the FDSN Webservice : check your Internet connection,
-          check that your Network is available in the given webservice
-          <br><br>
-          - To use and StationXML file: check that your input is a StationXML. You can use the obspy command <i>read_inventory()</i>
-        </i></small>
-      </p>
-    </div>
-    <hr>
-    {% endif %}
-    <b>1. From a FDSN Webservice (online only)</b><br><br>
-      {{ ws_form.as_p }}
-      <input type="submit" class="btn btn-sm btn-success" value="Use webservice"
-      name="nslc_fdsn" data-toggle="tooltip" data-placement="right"
-      title="Will get all N.S.L.C. codes (no data) available for the network(s)
-      that you have previously entered">
+  <div class="alert alert-success" role="alert">
+     <h4 class="alert-heading">Initialise N.S.L.C</h4>
+     Use one of the following methods
+  </div>
+  <hr>
+  {% if warning %}
+  <div class="alert">
+    <p class="error-message" style="color:red">
+      <i class="fa fa-exclamation-circle">
+        No NSLC found
+      </i>
+      <br>
+      <small><i>
+        Suggestions: <br><br>
+        - To use the FDSN Webservice : check your Internet connection,
+        check that your Network is available in the given webservice
+        <br><br>
+        - To use and StationXML file: check that your input is a StationXML. You can use the obspy command <i>read_inventory()</i>
+      </i></small>
+    </p>
+  </div>
+  <hr>
+  {% endif %}
+
+
+  <div class="tabbable">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" href="#StationXMLtab" data-toggle="tab" role="tab" >StationXML</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#fdsnwstab" data-toggle="tab" aria-selected="true" role="tab" >FDSN Webservice</a>
+      </li>
+    </ul>
     <br>
-    <hr>
-  </form>
-  <form method="post" enctype="multipart/form-data" id="nslc_form_2">
-    {% csrf_token %}
-    <b>2. From a StationXML file</b><br><br>
-      {{ file_form.as_p }}
-      <input type="submit" class="btn btn-sm btn-success" value="Use file" name="nslc_file">
-    <hr>
-  </form>
+    <div class="tab-content">
+      <div class="tab-pane fade" id="fdsnwstab" role="tabpanel">
+        <ul class="nav ">
+          <div class="panel">
+            <form method="post" id="nslc_form_1">
+              {% csrf_token %}
+              <b>Get NSLC from a FDSN Webservice (online only)</b><br><br>
+                {{ ws_form.as_p }}
+                <input type="submit" class="btn btn-sm btn-success" value="Use webservice"
+                name="nslc_fdsn" data-toggle="tooltip" data-placement="right"
+                title="Will get all N.S.L.C. codes (no data) available for the network(s)
+                that you have previously entered">
+            </form>
+            <br>
+        </ul>
+      </div>
+      <div class="tab-pane fade show active" id="StationXMLtab" role="tabpanel">
+        <ul class="nav">
+          <div class="panel">
+            <form method="post" enctype="multipart/form-data" id="nslc_form_2">
+              {% csrf_token %}
+              <b>Get NSLC from a StationXML file</b><br><br>
+                {{ file_form.as_p }}
+                <input type="submit" class="btn btn-sm btn-success" value="Use file" name="nslc_file">
+                <br><br><br><br><br><br>
+            </form>
+          </div>
+       </ul>
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+
+
 </div>
+
 <div class="modal-footer">
   <form method="post">
     {% csrf_token %}

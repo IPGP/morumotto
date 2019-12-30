@@ -2,11 +2,14 @@
 import os
 import subprocess
 import logging
+from distutils.dir_util import copy_tree
 from obspy.io.xseed import Parser
+from obspy import read_inventory
+from obspy.clients.fdsn.header import FDSNNoDataException
 from datetime import datetime, timedelta
 from fnmatch import fnmatch
-from .models import Metadata
-from seismicarchive.models import NSLC, Network, Station, Location, Channel
+from .models import Metadata, Message
+from archive.models import NSLC, Network, Station, Location, Channel
 
 logger = logging.getLogger('QC')
 
@@ -16,18 +19,28 @@ def update_metadata(config):
     Update metadata in the database
     """
     archive = config.archive
+    md_format = config.get_metadata_format()
+    md_extention = ("*.%s" %md_format.extention)
     md_dir = os.path.join(archive,"METADATA/")
-    md_list = [f for f in os.listdir(md_dir) if
-               os.path.isfile(os.path.join(md_dir, f))]
+    # md_list = [f for f in os.listdir(md_dir) if
+    #            os.path.isfile(os.path.join(md_dir, f))]
+    # get all files recursively
+    md_list = list()
+    for (dirpath, dirnames, filenames) in os.walk(md_dir):
+        md_list += [os.path.join(dirpath, file) for file in filenames]
     for md_file in sorted(md_list):
-        if fnmatch(md_file, '*.dataless'):
+        if fnmatch(md_file, md_extention):
             md_path = os.path.join(md_dir,md_file)
-            sp = Parser(md_path) #ONLY SEED
-            for chan in sp.get_inventory()['channels']:
-                code = chan["channel_id"]
-                lon = chan["longitude"]
-                lat = chan["latitude"]
-                net, sta, loc, chan = code.split(".")
+            md_format.validate(md_path)
+            try:
+                sp = md_format.read_metadata(md_path)
+            except ValueError as err :
+                logger.exception("Reading metadata error")
+            for chan in sp.get_contents()['channels']:
+                lon = sp.get_coordinates(chan)["longitude"]
+                lat = sp.get_coordinates(chan)["latitude"]
+                elevation = sp.get_coordinates(chan)["elevation"]
+                net, sta, loc, chan = chan.split(".")
                 network, c = Network.objects.get_or_create(name=net)
                 station, c = Station.objects.get_or_create(network=network,
                                                            name=sta)
@@ -39,9 +52,8 @@ def update_metadata(config):
                 metadata, created = Metadata.objects.get_or_create(
                                   nslc=nslc, file=md_path, lon=lon, lat=lat)
 
-# /home/geber/SiQaCo/siqaco_project/WORKING_DIR/METADATA
 
-def metadata_from_webservice(config, client):
+def md_from_webservice(config, client):
     """
     This method fetches metadata for all stations and networks in the config
     object, using the WEBSERVICE client, and writing it in the final archive
@@ -50,33 +62,36 @@ def metadata_from_webservice(config, client):
     Parameters :
 
     client : A webservice client for ObsPy, for example
-             obspy.clients.fdsn("IRIS")
+             obspy.clients.fdsn.Client("IRIS")
 
-    config : a Configuration instance (from seismicarchive.models)
+    config : a Configuration instance (from archive.models)
     """
     md_format = config.get_metadata_format()
-    nslc_list = [nslc for nslc in config.nslc.all()]
+    nslc_list = [ nslc for nslc in NSLC.objects.all() ]
     archive = config.archive
 
     for nslc in nslc_list:
+        if not os.path.exists(os.path.join(archive,"METADATA/",nslc.net.name)):
+            os.makedirs(os.path.join(archive,"METADATA/",nslc.net.name))
         filename = os.path.join(
                  archive,"METADATA/",nslc.net.name,
-                 "%s_%s.%s" %(nslc.net.name,nslc.sta.name,md_format.__str__()))
+                 "%s_%s.%s" %(nslc.net.name,nslc.sta.name,md_format.extention))
         try:
             inventory = client.get_stations(
                       network=nslc.net.name,
                       station=nslc.sta.name,
-                      level="channel")
+                      level="response")
             md_format.write_metadata(inventory,filename)
             update_metadata(config)
             logger.info( "Metadata updated on %s from %s"
                         %(datetime.now(), client) )
-        except AttributeError as err:
+        except (FDSNNoDataException,
+                AttributeError) as err:
             logger.exception(err)
 
 
 
-def metadata_from_svn(config, svn_address, username, password):
+def md_from_svn(config, svn_address, username, password):
     """
     This method fetches metadata for all stations and networks in the config
     object, using a svn adress, and writing it in the final archive
@@ -86,7 +101,7 @@ def metadata_from_svn(config, svn_address, username, password):
 
     svn_address : the URL to the svn to get metadata
 
-    config : a Configuration instance (from seismicarchive.models)
+    config : a Configuration instance (from archive.models)
     """
 
     archive = config.archive
@@ -104,7 +119,7 @@ def metadata_from_svn(config, svn_address, username, password):
         logger.error(err)
 
 
-def metadata_from_dir(config, dirname):
+def md_from_dir(config, dirname):
     """
     This method makes a local copy from metadata files contained in a local dir,
     located by dirname
@@ -114,30 +129,58 @@ def metadata_from_dir(config, dirname):
     dirname : `path`
             the path to directory we want to read
 
-    config : a Configuration instance (from seismicarchive.models)
+    config : a Configuration instance (from archive.models)
     """
 
 
     archive = config.archive
     destination = os.path.join(archive,"METADATA/")
     try:
-        result = subprocess.run(["cp","-rf", dirname, destination],
-                                stdout=subprocess.PIPE)
-
+        # remove files in dir
+        for root, dirs, files in os.walk(destination):
+            for file in files:
+                os.remove(os.path.join(root, file))
+        copy_tree(dirname, destination)
         # print(result.stdout.decode('utf-8'))
-        update_metadata(config)
-        logger.info( "Metadata updated on %s from %s"
-                    %(datetime.now(), dirname) )
     except (TypeError, IndexError) as err:
         logger.error(err)
 
-
-def dataless_log_check():
-    # get DatalessUpdateLog
-    now = datetime.now()
-    pass
+    update_metadata(config)
+    logger.info( "Metadata updated on %s from %s" %(datetime.now(), dirname) )
 
 
-def dataless_consistency():
-    #check_dataless.sh
-    pass
+
+def md_check(config, nslc_list, starttime=None,endtime=None):
+    """
+
+    This method will perform some validations on your metadata list
+    and save all messages into database
+    """
+
+    md_format = config.get_metadata_format()
+    metadata_list = Metadata.objects.filter(nslc__in=nslc_list)
+    for metadata in metadata_list:
+        error_list, warning_list = md_format.validate(metadata.file)
+        for error in error_list:
+            error_msg = Message(type='error',msg=error)
+            metadata.messages.add(error_msg)
+            metadata.save()
+        for warning in warning_list:
+            warning_msg = Message(type='warning',msg=warning)
+            metadata.messages.add(warning_msg)
+            metadata.save()
+
+
+def metadata_vs_data(config, nslc_list, starttime=None,endtime=None):
+        """
+
+        This method will perform some validations on your metadata list,
+        confronting it with your data
+        """
+
+        md_format = config.get_metadata_format()
+        metadata_list = Metadata.objects.filter(nslc__in=nslc_list)
+        for metadata in metadata_list:
+            # get all data with this nslc,
+            # read datafile, check consistency with NSLC, etc.
+            continue

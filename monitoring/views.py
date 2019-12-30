@@ -3,18 +3,18 @@ import os
 import logging
 from .models import ArchiveMonitoring, AverageStat, AverageCompStat, Stat, \
     ChanPath, CompPath
-from seismicarchive.models import SourceAvailability, Gap, NSLC
+from archive.models import SourceAvailability, Gap, NSLC
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from collections import OrderedDict
 from django.shortcuts import get_object_or_404, get_list_or_404, render
 from django.http import HttpResponseRedirect
-import siqaco.toolbox as toolbox
+import morumotto.toolbox as toolbox
 from celery.task.control import inspect
 from plugins.format import miniSEED
 from datetime import datetime
 import time
-from siqaco import tasks
+from morumotto import tasks
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORKING_DIR =  os.path.join(BASE_DIR, "WORKING_DIR/")
@@ -383,7 +383,7 @@ def overlaps(request, network_id, comp_id, station_id, location_id):
 
 
 def default_availability(request):
-    path = get_list_or_404(SourceAvailability)[0]
+    path = get_list_or_404(SourceAvailability.objects.all().order_by('nslc'))[0]
     redirection = "availability/%s/%s/%s/%s" %(path.nslc.net.name,
                                                path.nslc.sta.name,
                                                path.nslc.loc.name,
@@ -423,9 +423,13 @@ def availability(request, network_id, comp_id, station_id, location_id):
                  archive=archive,
                  nslc__net__name=network_id,
                  nslc__sta__name=station_id,
-                 nslc__loc__name=location_id)
+                 nslc__loc__name=location_id,
+                 status__in=["new, in_process"])
 
-    sta_list = [sta.name for sta in monitoring_config.stations.all()]
+    sta_list = [sta.name for sta in monitoring_config.stations.all()
+                if SourceAvailability.objects.filter(
+                    nslc__sta__name=sta.name).count()
+                ]
     chan_paths = sorted(OrderedDict((o.chan_path,o.chan_path) for o in
                                     ChanPath.objects.filter(archive=archive,
                                     net=network_id,
@@ -559,14 +563,14 @@ def update_stats(request):
     # accelerate the page.
 
     ################ Begin comment section ################
-    # try:
-    #     taskid = list(inspect().active().values())[0][0]['id']
-    #     if taskid:
-    #         context["display_statistics"] = True
-    #         context["task_id"] = taskid
-    # except:
-    #     # No celery worker found
-    #     pass
+    try:
+        taskid = list(inspect().active().values())[0][0]['id']
+        if taskid:
+            context["display_statistics"] = True
+            context["task_id"] = taskid
+    except:
+        # No celery worker found
+        pass
     ################ End comment section ##################
 
     if(request.POST.get('celery_update_monitoring')):

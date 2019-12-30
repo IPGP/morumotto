@@ -3,9 +3,9 @@ import re
 import logging
 from datetime import datetime
 from obspy import read_inventory
-from seismicarchive.models import Network, Station, Location, Channel, NSLC
+from archive.models import Network, Station, Location, Channel, NSLC
 from monitoring.models import Component
-import siqaco.toolbox as toolbox
+import morumotto.toolbox as toolbox
 
 
 logger = logging.getLogger('Status')
@@ -32,12 +32,15 @@ def update_database(net, sta, loc, chan, configuration):
     chan : `str`
           The Channel code
 
-    configuration : a Configuration instance (from seismicarchive.models)
+    configuration : a Configuration instance (from archive.models)
     """
     comp = chan[0:2]
     network, created = Network.objects.get_or_create(name=net)
     station, created = Station.objects.get_or_create(
                      network=network,name=sta)
+    if not configuration.networks.filter(pk=network.pk).exists():
+        configuration.networks.add(network)
+        configuration.save()
     if not configuration.stations.filter(pk=station.pk).exists():
         configuration.stations.add(station)
         configuration.save()
@@ -53,6 +56,7 @@ def update_database(net, sta, loc, chan, configuration):
         configuration.save()
 
     component, created = Component.objects.get_or_create(name=comp)
+    return nslc
 
 
 def nslc_from_webservice(client, configuration):
@@ -65,7 +69,7 @@ def nslc_from_webservice(client, configuration):
     client : A webservice client for ObsPy, for example
              obspy.clients.fdsn("IRIS")
 
-    configuration : a Configuration instance (from seismicarchive.models)
+    configuration : a Configuration instance (from archive.models)
     """
 
 
@@ -78,16 +82,18 @@ def nslc_from_webservice(client, configuration):
                   starttime=toolbox.to_utcdatetime(datetime.utcnow()),
                   endtime=toolbox.to_utcdatetime(datetime.utcnow()),
                   level="channel")
-        print("inventory", inventory)
+        # print("inventory", inventory)
     except (TypeError, IndexError) as err:
         logger.exception("error", err)
 
     # for network in sorted(inventory.get_contents()["networks"]):
     # NSLC.objects.all().delete()
+    nslc_list = list()
     for channel in sorted(inventory.get_contents()["channels"]):
         net,sta,loc,chan = channel.split('.')
-        update_database(net,sta,loc,chan,configuration)
-
+        nslc = update_database(net,sta,loc,chan,configuration)
+        nslc_list.append(nslc.code)
+    return nslc_list
 
 def nslc_from_stationxml(filename, configuration):
     """
@@ -98,36 +104,39 @@ def nslc_from_stationxml(filename, configuration):
     file : `path`
             the path to file we want to read
 
-    configuration : a Configuration instance (from seismicarchive.models)
+    configuration : a Configuration instance (from archive.models)
     """
     inv = read_inventory(filename, format="STATIONXML")
+    nslc_list = list()
     for channel in sorted(inv.get_contents()["channels"]):
         net,sta,loc,chan = channel.split('.')
-        update_database(net,sta,loc,chan,configuration)
+        nslc = update_database(net,sta,loc,chan,configuration)
+        nslc_list.append(nslc.code)
+    return nslc_list
 
 
-def nslc_from_file(filename,configuration):
-    """
-    This method reads all NSLC from an xml file. The NSLC must be | separated,
-    following this example :
-
-    #Network|Station|Location|Channel
-    G|AIS|00|BHE
-    G|AIS|00|BHN
-
-    Parameters :
-
-    file : `path`
-            the path to file we want to read
-
-    configuration : a Configuration instance (from seismicarchive.models)
-    """
-
-    for line in filename.__iter__():
-        code = re.findall(r"'([^']*)'",str(line))[0]
-        code = code.replace('\\n','')
-
-        if code[0] == "#":
-            continue
-        net,sta,loc,chan = code.split("|")
-        update_database(net,sta,loc,chan,configuration)
+# def nslc_from_file(filename,configuration):
+#     """
+#     This method reads all NSLC from an xml file. The NSLC must be | separated,
+#     following this example :
+#
+#     #Network|Station|Location|Channel
+#     G|AIS|00|BHE
+#     G|AIS|00|BHN
+#
+#     Parameters :
+#
+#     file : `path`
+#             the path to file we want to read
+#
+#     configuration : a Configuration instance (from archive.models)
+#     """
+#
+#     for line in filename.__iter__():
+#         code = re.findall(r"'([^']*)'",str(line))[0]
+#         code = code.replace('\\n','')
+#
+#         if code[0] == "#":
+#             continue
+#         net,sta,loc,chan = code.split("|")
+#         update_database(net,sta,loc,chan,configuration)

@@ -12,11 +12,13 @@ from datetime import datetime, timedelta
 from glob import glob
 from distutils.dir_util import copy_tree
 import plugins.structure as structure
-import siqaco.toolbox as toolbox
+import morumotto.toolbox as toolbox
 import matplotlib
+import matplotlib.pyplot as plt
+
 matplotlib.use('Agg')
 
-logger = logging.getLogger('Update')
+logger = logging.getLogger('Status')
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PATCH_DIR =  os.path.join(BASE_DIR, "WORKING_DIR", "PATCH")
 
@@ -61,7 +63,13 @@ class DataFormat():
     srouce you want to use), and then you will have to create
 
     - a read function
-    - an inventory function
+    - a write Function
+    - a get_stats Function
+    - a generate_plot function
+    - a plot_completion Function
+    - a set_patch function
+    - a check_diff function
+    - a merge_to_final Function
 
     You can have a look at the other existing plugins to see how to proceed
     """
@@ -72,28 +80,35 @@ class DataFormat():
                               self.script_name)
                               )
     @abc.abstractmethod
-    def read(self):
+    def read(self, filename, starttime=None, endtime=None):
         pass
     @abc.abstractmethod
     def write(self):
         pass
     @abc.abstractmethod
-    def get_stats(self):
+    def get_stats(self, streamfile):
         pass
     @abc.abstractmethod
-    def generate_plot(self):
+    def generate_plot(self, streamfile, plotfilename):
         pass
     @abc.abstractmethod
-    def set_patch(self):
+    def plot_completion(self, nslc, year,plotfilename, archive, struct):
         pass
     @abc.abstractmethod
-    def merge_to_final(self):
+    def set_patch(self, tempdir, gap_files, patch_files,
+                  gap_starttime, gap_endtime, quality, log):
+        pass
+    @abc.abstractmethod
+    def check_diff(self , patched_file, original_file):
+        pass
+    @abc.abstractmethod
+    def merge_to_final(self, gap_files, patched_files, tempdir, final_archive):
         pass
 
 
 class miniSEED(DataFormat):
     # Don't forget to set the name of the script which must be placed in the
-    # plugins/ directory
+    # plugins/set_patch directory
     script_name = "set_patch_seed.sh"
 
     def read(self, mseedfile,starttime=None,endtime=None):
@@ -130,6 +145,10 @@ class miniSEED(DataFormat):
 
 
     def generate_plot(self, streamfile, plotfilename):
+        """
+        Generates a daily plot for a given miniSEED file, and saves it in the
+        file defined by plotfilename
+        """
         st = obspy.read(streamfile)
         ss0 = st[0].stats
 
@@ -155,6 +174,78 @@ class miniSEED(DataFormat):
             logger.error(err)
             return err # if we can't compute plot from stream, we just give an error message
         return True
+
+
+    def plot_completion(self,nslc,year,plotfilename, archive, struct):
+        """
+        Method that will plot data completion for a given nslc, to have a
+        quick overview over a year
+        parameters :
+
+        config : `archive.models.Configuration`
+                  config object
+
+        nslc : `str`
+                nslc code
+
+        year : `int`
+                year to compute completion
+
+        plotfilename : `str`
+                      where you want to save your plot
+
+        archive : `str`
+                  path to the final archive
+
+        struct: `str`
+                your final archive structure type
+        """
+        script = "obspy-scan"
+        net,sta,loc,chan = nslc.split(".")
+        if struct == "SDS":
+            nslc_dir = os.path.join(archive,year,net,sta)
+        elif struct == "CSS":
+            nslc_dir = os.path.join(archive,year,"*","*.*.%s:*:*:*:*" %year)
+        elif struct == "CDAY":
+            nslc_dir = os.path.join(archive,"*.*.*.*.%s:*:#*:#*:#*" %year)
+        elif struct == "SDAY":
+            nslc_dir = os.path.join(archive,"*.*.%s:*" %year)
+        elif struct == "BUD":
+            nslc_dir = os.path.join(archive,net,sta,"*.*.*.*.%s.*" %year)
+        else:
+            logger.error("Structure not implemented yet")
+            return "Archive structure unknown"
+        arg_list= ['-o{0}'.format(plotfilename),
+                   '-f{0}'.format("MSEED"),
+                   nslc_dir
+                   ]
+        try:
+            result = subprocess.run([script] + arg_list, stdout=subprocess.PIPE)
+            print(str(script + ', '.join(arg_list)))
+            # stats = result.stdout.decode('utf-8').splitlines()
+            # nslc, start, end, span = stat.split(" ")
+            # plt.figure()
+            # plt.plot(stats[1],stats[3])
+            # plt.grid(True)
+            # plt.savefig(plotfilename)
+            return True
+        except (TypeError, IndexError) as err:
+            logger.error(err)
+            return err # if we can't compute plot from stream, we just give an error message
+        except (FileNotFoundError) as err:
+            logger.error(err)
+            return err
+        # try:
+        #     logfile = open(log, 'a')
+        #     logfile.write("%s" % result.stdout.decode('utf-8')+"\n")
+        #     logfile.close()
+        # except (OSError) as err:
+        #     logger.error(err))
+
+
+
+
+
 
 
     def set_patch(self, tempdir, gap_files, patch_files,
@@ -183,7 +274,6 @@ class miniSEED(DataFormat):
         returns list of patched files
         """
         nslc_list = [filename.split(os.sep)[-1] for filename in patch_files]
-        print("nslc list : ", nslc_list)
         for nslc in set(nslc_list):
             gap_files_by_chan = [f for f in gap_files if nslc in f.key]
             patch_file_by_chan = [f for f in patch_files if nslc in f]
@@ -197,15 +287,15 @@ class miniSEED(DataFormat):
             patch_filelist = create_listfile(destination=tempdir,
                                              file_list=patch_file_by_chan,
                                              prefix="patch_")
-            start = gap_starttime.strftime("%Y.%j,%H:%M:%S.%f")
-            end = gap_endtime.strftime("%Y.%j,%H:%M:%S.%f")
+            start = gap_starttime.strftime("%Y-%m-%dT%H:%M:%S.%f")
+            end = gap_endtime.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
 
             arg_list= [str(tempdir),str(gap_filelist),str(patch_filelist),
                        str(start), str(end), str(quality),
                        ]
-            result = subprocess.run([self.set_patch_script] + arg_list,
-                                    stdout=subprocess.PIPE)
+            result = subprocess.run([self.set_patch_script]
+                                    + arg_list, stdout=subprocess.PIPE)
             try:
                 logfile = open(log, 'a')
                 logfile.write("%s" % result.stdout.decode('utf-8')+"\n")
@@ -316,12 +406,12 @@ class miniSEED(DataFormat):
         #                    %patched_file)
         #     return False
 
-        # if (st1 == st2):
-        #     # If we have the exact same file, we don't copy it
-        #     logger.warning("Set patch : original is the same "
-        #                     "as patch, \n Not copying file %s"
-        #                     %patched_file)
-        #     return False
+        if (st1 == st2):
+            # If we have the exact same file, we don't copy it
+            logger.warning("Set patch : original is the same "
+                            "as patch, \n Not copying file %s"
+                            %patched_file)
+            return False
 
         return True
 
@@ -330,14 +420,7 @@ class miniSEED(DataFormat):
         """
         This methods reads the working archive and merges all files to the final
         archive
-        Arguments:
-        work_archive : `str`
-                      the path to our working directory, where we have the
-                      working archive
 
-        Returns:
-        final_archive : `str`
-                        path to the final archive
         """
         # print("gap_files",gap_files)
         for key, patched_file in patched_files.items():
@@ -346,7 +429,7 @@ class miniSEED(DataFormat):
             if gap_files.filter(key=key).count() == 1:
                 original_file = gap_files.get(key=key).filename
                 if self.check_diff(patched_file, original_file):
-                    print("Merging data in %s to final archive" %patched_file)
+                    print("Merging patched file %s to final archive" %patched_file)
                     shutil.copy(patched_file, original_file)
             elif gap_files.filter(key=key).count() > 1:
                 logger.error("More than one file exist for the key %s" %key)

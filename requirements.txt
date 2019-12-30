@@ -7,13 +7,14 @@ chardet==3.0.4
 croniter==0.3.30
 cycler==0.10.0
 decorator==4.4.0
-Django==2.1.11
+Django==2.1
 django-admin-colors==0.2.0
 django-betterforms==1.2
 django-bootstrap-datepicker-plus==3.0.5
 django-bootstrap-modal-forms==1.4.2
 django-bootstrap4==0.0.8
 django-celery-beat==1.5.0
+django-celery-results==1.1.2
 django-crontab==0.7.1
 django-export==1.11.0
 django-form-utils==1.0.3
@@ -35,6 +36,7 @@ mysqlclient==1.4.2.post1
 numpy==1.16.4
 obspy==1.1.1
 protobuf==3.8.0
+psycopg2-binary==2.8.4
 pyparsing==2.4.0
 python-crontab==2.3.6
 python-dateutil==2.8.0

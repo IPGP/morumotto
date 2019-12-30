@@ -13,6 +13,7 @@ urlpatterns = [
     path('init_monitoring', views.init_monitoring, name='init_monitoring'),
     path('init_qcconfig', views.init_qcconfig, name='init_qcconfig'),
     path('init_finish', views.init_finish, name='init_finish'),
+    path('import_nslc',views.import_nslc, name='import_nslc'),
     path('about', views.about, name='about'),
     # path('old', views.index_old, name='index.old')
 ]

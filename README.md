@@ -1,27 +1,41 @@
 #### MORUMOTTO
 
-1. Installation
-    1. With installer
-    2. Manual installation
-2. Getting Started
-3. Read the docs
+1. [Installation](#Installation)
+    1. [With installer](#METHOD 1 : TL;DR)
+    2. [Manual installation](#METHOD 2 : Manual installation)
+2. [Getting Started](#Getting Started)
+3. [Read the docs](#Read the docs)
 ## Installation
 
-### METHOD 1 : With installer
+### METHOD 1 : TL;DR
 
-- Step 1, in mysql _(not required, but recommanded)_
+- Step 1, in your database prompt _(not required, but recommanded)_
+
+    - With MySQL / Mariadb  :
 
     ```sql
     CREATE DATABASE MORUMOTTO;
-    CREATE USER 'morumotto_user'@'localhost' IDENTIFIED BY 'some password';
-    GRANT ALL ON MORUMOTTO.* TO 'morumotto_user'@'localhost';
+    CREATE USER 'morumotto_user'@'host_name' IDENTIFIED BY 'some password';
+    GRANT ALL ON MORUMOTTO.* TO 'morumotto_user'@'host_name';
+    ALTER DATABASE `MORUMOTTO` CHARACTER SET utf8;
     FLUSH PRIVILEGES;
     ```
+
+    - With PostgreSQL  :
+    ```sql
+    CREATE DATABASE MORUMOTTO;
+    CREATE USER morumotto_user WITH ENCRYPTED PASSWORD 'some password';
+    ALTER ROLE morumotto_user SET client_encoding TO 'utf8';
+    ALTER ROLE morumotto_user SET default_transaction_isolation TO 'read committed';
+    ALTER ROLE morumotto_user SET timezone TO 'UTC';
+    GRANT ALL PRIVILEGES ON DATABASE MORUMOTTO to morumotto_user;
+    ```
+
 
 - Step 2
 
     ```sh
-    git clone https://k2.ipgp.fr/geber/morumotto
+    git clone https://github.com/IPGP/morumotto
     cd morumotto  
     ./install.sh
     ```
@@ -57,17 +71,19 @@ For the following steps, you must stay in this folder
     - wget
     - libpython3.6-dev
     - supervisor
+    - cpulimit
+    - java
 
 
     In Ubuntu:  
 
     ```sh
-    sudo apt-get install -y python wget make python-pip mysql-server libmysqlclient-dev python3-dev libpython3.6-dev python3-venv supervisor
+    sudo apt-get install -y python wget make python-pip mysql-server libmysqlclient-dev python3-dev libpython3.6-dev python3-venv supervisor cpulimit default-jre
     ```
 
     In Debian:
     ```sh
-    sudo apt-get install -y python wget make python-pip mariadb-dev libmariadb-dev-compat libmariadb-dev python3-dev libpython3.6-dev python3-venv supervisor
+    sudo apt-get install -y python wget make python-pip mariadb-dev libmariadb-dev-compat libmariadb-dev python3-dev libpython3.6-dev python3-venv supervisor cpulimit default-jre
     ```
 
 
@@ -80,8 +96,15 @@ For the following steps, you must stay in this folder
 
 5. Install sdrsplit in /morumotto/bin : ([Download tar file here](http://www.ncedc.org/qug/software/ucb/sdrsplit.2013.260.tar.gz)) Then copy the sdrsplit executable to /morumotto/bin.
 
+6. Install IRIS stationxml validator in /morumotto/bin : ([Download jar file here (v.1.5.9.5)](https://github.com/iris-edu/stationxml-validator/releases/download/1.5.9.5/station-xml-validator-1.5.9.5.jar)) Then copy the jar file to /morumotto/bin. It would be better to create a symbolic link to that file (but not mandatory). Just run (inside the morumotto bin/ directory)
 
-6. Install RabbitMQ (The parallel task are handled by the task queue manager [Celery](http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html#first-steps "First steps with celery").
+  ```sh
+  ln -s station-xml-validator-1.5.9.5.jar stationxml-validator.jar
+  ```
+
+  Note that if you copy several versions of stationxml-validator (e.g. 1.5.9.5 and 1.6.0.2) you will be able to choose in the admin interface which version to use to validate your metadata.
+
+7. Install RabbitMQ (The parallel task are handled by the task queue manager [Celery](http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html#first-steps "First steps with celery").
 Celery requires to install a broker, Morumotto uses RabbitMQ)  
 
     In Ubuntu/Debian :    
@@ -155,8 +178,8 @@ Now, you will have to create a Morumotto database within MySQL. To do so:
 
     ```sql
     CREATE DATABASE MORUMOTTO;
-    CREATE USER 'morumotto_user'@'localhost' IDENTIFIED BY 'your_password';
-    GRANT ALL ON MORUMOTTO.* TO 'morumotto_user'@'localhost';
+    CREATE USER 'morumotto_user'@'host' IDENTIFIED BY 'your_password';
+    GRANT ALL ON MORUMOTTO.* TO 'morumotto_user'@'host';
     FLUSH PRIVILEGES;
     ```
 
@@ -170,7 +193,7 @@ DATABASE_PASSWORD = 'your_password'
 DATABASE_HOST = 'your_host' #defaults to 127.0.0.1 to use local database
 ```  
 
-There is a template in the /morumotto/siqaco folder. Just duplicate it and remove the .template at the end of the file name and put your own settings in it. For the Allowed hosts, see below ("Access from another computer in the same network")
+There is a template in the morumotto/morumotto folder. Just duplicate it and remove the .template at the end of the file name and put your own settings in it. For the Allowed hosts, see below ("Access from another computer in the same network")
 
 
 _Note: you can change the database, user and password at your convinience, but they must be the same in the database and in the custom settings file_
@@ -184,7 +207,8 @@ If you want to use another RDBMS (PostGreSQL for example), please check the [Dja
 
     ```sh
     python manage.py migrate  
-    python manage.py makemigrations seismicarchive monitoring qualitycontrol logdb
+    python manage.py makemigrations archive monitoring qualitycontrol logdb
+    python manage.py migrate django_celery_results
     python manage.py migrate
     ```  
 
@@ -197,7 +221,7 @@ If you want to use another RDBMS (PostGreSQL for example), please check the [Dja
     python manage.py createsuperuser
     ```
 
-Fill the required informations. Don't forget it, it will be your administrator user for the MORUMOTTO software
+Fill the required informations. Don't forget it, it will be your administrator user for the Morumotto software
 
 All good, you're ready to go now !
 
@@ -270,7 +294,7 @@ Create a file named morumotto.conf, and paste the following text inside :
 _morumotto.conf_
 ```sh
 [program:morumotto_celery]
-command = ${dir}/morumotto-env/bin/celery -A siqaco worker -l info
+command = ${dir}/morumotto-env/bin/celery -A morumotto worker -l info
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_celery.log
@@ -281,7 +305,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_flower]
-command = ${dir}/morumotto-env/bin/celery flower -A siqaco --address=127.0.0.1 --port=5555
+command = ${dir}/morumotto-env/bin/celery flower -A morumotto --address=127.0.0.1 --port=5555
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_flower.log
@@ -343,7 +367,7 @@ morumotto:morumotto_runserver    RUNNING   pid 3938, uptime 0:38:21
 
 ##### Access from another computer in the same network :
 
-+ add the server's IP (1.2.3.4 for example) where MORUMOTTO is located to the ALLOWED_HOST in morumotto/siqaco/custom_settings.py
++ add the server's IP (1.2.3.4 for example) where Morumotto is located to the ALLOWED_HOST in morumotto/morumotto/custom_settings.py
 
 Then in a terminal, enter
 
@@ -352,7 +376,7 @@ source morumotto-env/bin/activate
 python manage.py runserver 0.0.0.0:8080
 ```
 
-Note that you have changed the port used by MORUMOTTO from 8000 (default) to 8080
+Note that you have changed the port used by Morumotto from 8000 (default) to 8080
 
 Then from any computer in the network, visit the following URL:
 
@@ -373,4 +397,4 @@ python manage.py runserver
 
 ## Read the docs
 
-[user_guide.pdf](https://github.com/IPGP/morumotto/raw/master/docs/user_guide.pdf)
+[user_guide.pdf](https://k2.ipgp.fr/geber/siqaco/raw/master/docs/user_guide.pdf?inline=false)

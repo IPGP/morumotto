@@ -5,7 +5,7 @@ import subprocess
 import logging
 from glob import glob
 from datetime import datetime, timedelta
-import siqaco.toolbox as toolbox
+import morumotto.toolbox as toolbox
 from django.utils.crypto import get_random_string
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,7 +64,8 @@ class SourcePlugin():
         if returncode == 0:
             logger.info("Plugin %s finished with success", plugin_name)
         elif returncode == 1:
-            logger.warning("Plugin %s failed : Execution error", plugin_name)
+            logger.warning("Plugin %s failed : Execution error. See PATCH log",
+                           plugin_name)
         elif returncode == 2:
             logger.warning("Plugin %s failed : No Data Found", plugin_name)
         elif returncode == 3:
@@ -77,7 +78,7 @@ class SourcePlugin():
 
 
     def read(self, postfile, workspace, data_format, blocksize,
-             compression, connect_infos, log, log_level=3):
+             compression, connect_infos, cpu_limit, log, log_level=3):
         """ This method will call the plugin associated with this class.
 
         Parameters
@@ -106,6 +107,8 @@ class SourcePlugin():
                         that the plugin understands this str and all
                         informations required for the connection to the device
                         are in this str
+        cpu_limit : `int`
+                    Percentage of CPU allowed
         log : `str`
                     The complete log path to logfile
         """
@@ -116,6 +119,7 @@ class SourcePlugin():
                        '--blocksize={0}'.format(blocksize),
                        '--compression={0}'.format(compression),
                        '--connect-infos={0}'.format(connect_infos),
+                       '--cpu-limit={0}'.format(cpu_limit),
                        '--log-level={0}'.format(log_level),
                        ]
             result = subprocess.run([self.script] + arg_list,

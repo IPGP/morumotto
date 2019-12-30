@@ -1,8 +1,6 @@
 #!/bin/bash -e
-# Siqaco plugin to get data from the FDSN Web Service, using dataselect
-SCRIPTPATH=$(dirname $0)
-siqacobin="$(dirname $(dirname ${SCRIPTPATH}}))/bin"
-export PATH="${siqacobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
+# Morumotto plugin to correct seed data in patch
+
 # ************************************************************************#
 #                                                                         #
 #    Copyright (C) 2019 RESIF/IPGP                                        #
@@ -17,14 +15,18 @@ export PATH="${siqacobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        #
 #    GNU General Public License for more details.                         #
 #                                                                         #
-#    This program is part of 'Projet SiQaCo'.                             #
+#    This program is part of 'Morumotto'.                                 #
 #    It has been financed by RESIF (Réseau sismologique & géodésique      #
 #    français )                                                           #
 #                                                                         #
 #  ***********************************************************************#
 
+SCRIPTPATH=$(dirname $0)
+morumottobin="$(dirname $(dirname ${SCRIPTPATH}}))/bin"
+export PATH="${morumottobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
+check_requirements.sh
 
-echo $@
+echo "correct_seed.sh "$@
 set -o history -o histexpand # only for dev: echo !! prints last command line
 
 usage()
@@ -76,36 +78,6 @@ if [ "$#" -gt 5 ] || [ -z "$1" ]; then
   exit 1
 fi
 
-# Check requirements
-if ! [ -x "$(command -v dataselect)" ]; then
-  echo >&2 "ERROR : dataselect is not\
-  installed. Please install dataselect >= 3.20:\
-  https://github.com/iris-edu/dataselect"
-  exit 1
-fi
-
-DATASELECT_VERSION=$(dataselect -V 2>&1)
-VERSION=${DATASELECT_VERSION##*: }
-
-if (( $(echo "${VERSION} <= 3.19" |bc -l) )); then
-  echo "Your dataselect software version is ${VERSION}, must be >= 3.20\
-  Please install dataselect >= 3.20: https://github.com/iris-edu/dataselect"
-  exit 1
-fi
-
-if ! [ -x "$(command -v msi)" ]; then
-  echo >&2 "ERROR : msi (miniSEED inspector)\
-  is not installed. Please install msi\
-  https://github.com/iris-edu/msi"
-  exit 1
-fi
-
-if ! [ -x "$(command -v qmerge)" ]; then
-  echo >&2 "ERROR : qmerge \
-  is not installed. Please install qmerge : \
-  quake.geo.berkeley.edu/qug/software/ucb/qmerge.2014.329.tar.gz"
-  exit 1
-fi
 
 # Verbose levels
 declare -A LOG_LEVELS
@@ -227,7 +199,7 @@ else
 fi
 rm -f ${INFILE}
 
-#
+
 # Demux data and sort them in the appropriate structure.
 dataselect -szs -CHAN ${OUTDIR} ${CORRECTED_FILE}
 if [ $? -ne 0 ]; then

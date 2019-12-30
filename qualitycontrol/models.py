@@ -1,15 +1,22 @@
 # -*- coding: utf-8 -*-
-from django.db import models
+import os
+import re
 import obspy
 import logging
 import importlib
+from fnmatch import fnmatch
+from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
-from seismicarchive.models import NSLC
+from archive.models import NSLC
 from plugins.choices import get_plugin_choices
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BIN =  os.path.join(BASE_DIR, "bin")
+VALIDATOR_LINK = os.path.join(BASE_DIR, "bin","stationxml-validator.jar")
 
 LOG_LEVELS = (
     (logging.NOTSET, _('NotSet')),
@@ -21,13 +28,31 @@ LOG_LEVELS = (
 )
 
 
+def get_validator_choices():
+    VALIDATOR_CHOICES = ()
+    validator_list = [f for f in os.listdir(BIN) if
+                      ( os.path.isfile(os.path.join(BIN, f))
+                      and not os.path.islink(os.path.join(BIN, f))
+                      and fnmatch(f, '*.jar') ) ]
+    for validator in validator_list:
+        ver = '.'.join(re.findall(r"[\d']+", validator))
+        VALIDATOR_CHOICES += ((validator,ver),)
+
+    return VALIDATOR_CHOICES
+
+
 class QCConfig(models.Model):
     METADATAFORMAT_CHOICES = get_plugin_choices("metadata_format")
     archive = models.CharField(max_length=200)
     metadata_format = models.CharField(
                     max_length=50,
                     choices=METADATAFORMAT_CHOICES,
-                    default='DatalessSEED')
+                    default='stationXML')
+    metadata_validator = models.CharField(
+                       max_length=50,
+                       choices=get_validator_choices(),
+                       default='1.5.9.5',
+                       verbose_name="Metadata Validator Version",)
 
     def get_metadata_format(self):
         # We will instanciate the correct class according to the metadata format
@@ -41,10 +66,13 @@ class QCConfig(models.Model):
                   " See plugins/metadata_format.py" % self.metadata_format)
             return 1
     #
-    # def save(self, *args, **kwargs):
-    #     if QCConfig.objects.exists() and not self.pk:
-    #         raise ValidationError('There is can be only one QC instance')
-    #     return super(QCConfig, self).save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        print("valid:",self.metadata_validator )
+        validator_file = os.path.join(BASE_DIR, "bin",self.metadata_validator)
+        if os.path.exists(VALIDATOR_LINK):
+            os.remove(VALIDATOR_LINK)
+        os.symlink(validator_file, VALIDATOR_LINK)
+        return super(QCConfig, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.archive

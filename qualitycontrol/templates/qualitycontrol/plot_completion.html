@@ -3,11 +3,9 @@
 <html>
   <head>
     <title>Morumotto</title>
-    {% include "home/headers/basics.html" %}
+    {% include "home/headers/datepicker.html" %}
   </head>
-
   <body>
-
     {% include "home/header.html" %}
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb ">
@@ -16,11 +14,6 @@
       </ol>
     </nav>
 
-    <div class="container">
-      <div class="alert alert-danger" role="alert">
-        <i class="fas fa-ghost"></i> Not available yet, currently under development
-      </div>
-    </div>
     <div class="container-fluid">
 
       <div class="row">
@@ -32,7 +25,7 @@
                 <div class="submit-link-row">
                   <h6><b>{{ field.label_tag }}</b></h6>
                   {{ field }}
-                  <br>
+                  <br><br>
                 </div>
                 {% if form.errors %}
                   {% for error in field.errors %}
@@ -53,10 +46,13 @@
               Completion :
             </h5>
             <br>
-            <img src="{% static plotdir|add:filename_id|add:'.complt.'|add:extension %}" id="plot" />
+
+            <img data-enlargable style="cursor: zoom-in" src="{% static plotdir|add:filename_id|add:'.complt.'|add:extension %}" id="plot" />
             <br>
-            <b class="text-secondary">Station: </b>
-            <em class ="text-secondary">{{ metadata.nslc }}</em>
+            <em class="text-secondary">
+              Start times of traces with available data are marked by crosses, gaps are indicated by vertical red lines.
+              Data availability percentage is shown below station N.S.L.C
+             </em>
           {% elif figure is not False %}
             <div class="alert alert-danger" role="alert">
               <p><i class="fa fa-exclamation-circle"></i>
@@ -76,7 +72,25 @@
         $("#qcBtn").addClass("active");
         $("#completionDd").addClass("active");
         $("#logDd").attr("href","/admin/logdb/qclog/")
+        $("#id_year").data("DateTimePicker").defaultDate(new Date());
       });
+
+      $('img[data-enlargable]').addClass('img-enlargable').click(function(){
+          var src = $(this).attr('src');
+          $('<div>').css({
+              background: 'RGBA(0,0,0,.5) url('+src+') no-repeat center',
+              backgroundSize: 'contain',
+              width:'100%', height:'100%',
+              position:'fixed',
+              zIndex:'10000',
+              top:'0', left:'0',
+              cursor: 'zoom-out'
+          }).click(function(){
+              $(this).remove();
+          }).appendTo('body');
+      });
+
+
     </script>
   </body>
 

@@ -1,9 +1,5 @@
 #!/bin/bash -e
-# Siqaco plugin to copy data from a local directory, using dataselect
-SCRIPTPATH=$(dirname $0)
-siqacobin="$(dirname $(dirname ${SCRIPTPATH}}))/bin"
-export PATH="${siqacobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
-
+# Morumotto plugin to copy data from a local directory, using dataselect
 # ************************************************************************#
 #                                                                         #
 #    Copyright (C) 2019 RESIF/IPGP                                        #
@@ -18,7 +14,7 @@ export PATH="${siqacobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        #
 #    GNU General Public License for more details.                         #
 #                                                                         #
-#    This program is part of 'Projet SiQaCo'.                             #
+#    This program is part of 'Morumotto'.                                 #
 #    It has been financed by RESIF (Réseau sismologique & géodésique      #
 #    français )                                                           #
 #                                                                         #
@@ -37,18 +33,24 @@ export PATH="${siqacobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
 #
 # * LOGS:
 #
-# Siqaco will create a log file from the outputs of the plugin. Please use
+# Morumotto will create a log file from the outputs of the plugin. Please use
 # the .log funcion when you write your outputs, instead of echo
 #
 # ------------------------------------------------------------------------------
 
-# echo $@
+
+SCRIPTPATH=$(dirname $0)
+morumottobin="$(dirname $(dirname ${SCRIPTPATH}}))/bin"
+export PATH="${morumottobin}:${SCRIPTPATH}:/usr/local/bin:/usr/bin:/bin"
+check_requirements.sh
+
+echo $@
 set -o history -o histexpand # only for dev: echo !! prints last command line
 usage()
 {
   echo "usage : `basename $0` [-h] [--help] [--is_online] [--postfile=<path>]
   [--workspace=<path>] [--data-format=<name>] [--blocksize=<int>]
-  [--compression=<name>]
+  [--compression=<name>][--cpu-limit=<int>]
   [--connect-infos=<client:<wsaddress>[?limit_rate=<limit>]>]
   [--log-level=<int>]
 
@@ -92,6 +94,9 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
                                 (See qmerge -h)
                                 Defaults to 'STEIM2'
 
+  --cpu_limit                   An integer, which is the CPU percentage allowed
+                                for this plugin. See cpulimit manual
+
   --connect-infos=CONNECT_INFOS A string containing additional informations to
                                 access data. Must be
                                 dir:<directory>&structure:<struct_type>
@@ -118,36 +123,11 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
 fi
 
 # Check number of args
-if [ "$#" -gt 7 ] || [ -z "$1" ]; then
+if [ "$#" -gt 8 ] || [ -z "$1" ]; then
   echo "ERROR: wrong usage"
   usage
   exit 1
 fi
-
-# Check requirements
-if ! [ -x "$(command -v dataselect)" ]; then
-  echo >&2 "ERROR : msi (miniSEED inspector)\
-  is not installed. Please install msi\
-  https://github.com/iris-edu/msi"
-  exit 1
-fi
-DATASELECT_VERSION=$(dataselect -V 2>&1)
-VERSION=${DATASELECT_VERSION##*: }
-
-if (( $(echo "${VERSION} <= 3.19" |bc -l) )); then
-  echo "Your dataselect software version is ${VERSION}, must be >= 3.20
-  Please install dataselect >= 3.20: https://github.com/iris-edu/dataselect"
-  exit 1
-fi
-
-command -v msi >/dev/null 2>&1 || { echo >&2 "ERROR : msi (miniSEED inspector) \
-is not installed. Please install msi \
-https://github.com/iris-edu/msi"; exit 1; }
-
-command -v qmerge >/dev/null 2>&1 || { echo >&2 "ERROR : qmerge \
-is not installed. Please install qmerge : \
-quake.geo.berkeley.edu/qug/software/ucb/qmerge.2014.329.tar.gz"; exit 1; }
-
 
 # Verbose
 declare -A LOG_LEVELS
@@ -160,7 +140,7 @@ function .log () {
   fi
 }
 
-# Convert wget exit code to exit status understandable by SiQaCo
+# Convert wget exit code to exit status understandable by Morumotto
 # See doc of wget for exit status :
 # https://www.gnu.org/software/wget/manual/html_node/Exit-Status.html
 function convert_exit() {
@@ -191,6 +171,8 @@ function is_source_online() {
   fi
 }
 
+############## CHECKING INPUTS ##############
+
 # List of inputs
 ARGUMENT_LIST=(
     "is_online"
@@ -200,6 +182,7 @@ ARGUMENT_LIST=(
     "blocksize"
     "compression"
     "connect-infos"
+    "cpu-limit"
     "log-level"
 )
 
@@ -226,6 +209,8 @@ while true; do
 
         --compression) COMPRESS=$2; shift 2 ;;
 
+        --cpu-limit) CPU_LIMIT=$2; shift 2 ;;
+
         --connect-infos) CONNECT_INFOS=$2; shift 2 ;;
 
         --log-level) __VERBOSE=$2; shift 2 ;;
@@ -249,11 +234,11 @@ fi
 # Create defaults
 if [ "${WORKSPACE}" = "" ]; then
   base=$(dirname $(dirname $(pwd)}))
-  if [ ! -d "${base}/WORKING_DIR/TEST/PATCH/" ]; then
-    mkdir -pv "${base}/WORKING_DIR/TEST/PATCH/"
-    .log 3 "${base}/WORKING_DIR/TEST/PATCH/ created"
+  if [ ! -d "${base}/WORKING_DIR/PATCH/" ]; then
+    mkdir -pv "${base}/WORKING_DIR/PATCH/"
+    .log 3 "${base}/WORKING_DIR/PATCH/ created"
   fi
-  TEMPDIR=$(mktemp -d -p ${base}/WORKING_DIR/TEST/PATCH/)
+  TEMPDIR=$(mktemp -d -p ${base}/WORKING_DIR/PATCH/)
   WORKSPACE="${TEMPDIR}/LOCAL"
   .log 3 "Workspace: $WORKSPACE"
 fi
@@ -270,6 +255,8 @@ if [ "${COMPRESS}" = "" ]; then
   COMPRESS="STEIM2"
   .log 3 "Compress: $COMPRESS"
 fi
+
+# Check that we provided some connection informations
 if [ "${CONNECT_INFOS}" = "" ]; then
   .log 1 "Connect infos is empty, exiting..."
   exit 1
@@ -287,7 +274,7 @@ if [ ! -d "${WORKSPACE}" ]; then
   .log 3 "${WORKSPACE} created"
 fi
 
-################# THIS IS WERE THE MAGIC HAPPENS. (or not) #####################
+################# FETCH DATA ###################
 
 # 1. Get PATH
 SOURCE_DIR=$(echo ${CONNECT_INFOS} | awk -F '[:?=&]' '{print $2}')
@@ -300,19 +287,10 @@ if [ "${LIMIT_RATE}" = "" ]; then
 fi
 .log 3 "Limit rate: ${LIMIT_RATE}"
 
-# Create a temp directory (will be erase at the end of this script if succeded)
-# TEMP_DIR=$(mktemp -d -p ${WORKSPACE}) || { .log 1 \
-# "Failed to create temp dir"; exit 1; }
-# FILENAME="${TEMP_DIR}/${now}.ws_raw.${DATA_FORMAT}"
 FILENAME=$(mktemp ${WORKSPACE}/XXXXXX.local_cp.${DATA_FORMAT})
 .log 3 "Filename: ${FILENAME}"
 
-# wget -q --post-file=${POSTFILE} --limit-rate=${LIMIT_RATE} \
-# -O ${FILENAME} "http://${CLIENT}/fdsnws/dataselect/1/query" \
-# 2>&1 >/dev/null || exit_wget=$? ;
-
-# 1. Define file pattern
-
+# 2. Define file pattern
 case ${SOURCE_STRUCTURE} in
   "CHAN")FILE_PATTERN="/%n.%s.%l.%c";;
   # "QCHAN")FILE_PATTERN="/%n.%s.%l.%c.%q";;
@@ -325,7 +303,7 @@ case ${SOURCE_STRUCTURE} in
 esac
 
 
-# 2. Parse POSTFILE into a input list file and a selection file
+# 3. Parse POSTFILE into a input list file and a selection file
 INPUT_LIST=$(mktemp ${WORKSPACE}/XXXXXX.input.list)
 SELECT_FILE=$(mktemp ${WORKSPACE}/XXXXXX.select.list)
 echo "#net  sta  loc  chan  qual  start  end" > ${SELECT_FILE}
@@ -350,6 +328,7 @@ while IFS= read -r line; do
     if (( ${year_end} - ${year_start} > 1 )); then
       .log 1 "ERROR, you are trying to get data over more than 2 consecutive"\
       " years, the LOCAL_DIR plugin doesn't know how to handle this"
+      exit 1
     fi
     declare -a FILE_ARRAY=()
     if (( ${year_end} > ${year_start} )); then
@@ -408,79 +387,18 @@ if ! [[ -s ${INPUT_LIST} ]]; then
   exit 2;
 fi
 
-# 3. Copy data using dataselect, to a single output file
-dataselect -Ps -s ${SELECT_FILE} +o ${FILENAME} @${INPUT_LIST}
-#
-# # Debug : Print the trace list in debug verbose
-# .log 3 $(msi -tg ${FILENAME} 2>&1)
-#
-# # Change block size and compression type
-# OUTPUT=$(mktemp ${WORKSPACE}/XXXXXX.ws_raw.${DATA_FORMAT})
-# # Get informations on which type of errors we have to deal with
-# BAD_HEADERS_FLAGS=( $(msi -p ${FILENAME}  | awk -F":" -v blocking="${BLOCKSIZE}" -v coding="${COMPRESS}" \
-# '{
-#   if ( $1~/encoding.*/ && $2!~coding )
-#   {
-#           print "bad_encoding"
-#   }
-#   if ( $1~/record length.*/ && $2!~blocking)
-#   {
-#           print "bad_blocking"
-#   }
-# }' | sort -u) )
-# # Check if we found any error to correct
-# if (( ${#BAD_HEADERS_FLAGS[*]} ))
-# then
-#   QMERGE_OPT="-o ${OUTPUT}"
-#   for i in $(seq 0 $((${#BAD_HEADERS_FLAGS[*]} - 1)))
-#   do
-#     case "${BAD_HEADERS_FLAGS[i]}" in
-#       "bad_encoding")
-#         QMERGE_OPT="${QMERGE_OPT} -r -O ${COMPRESS}"
-#         ;;
-#       "bad_blocking")
-#         QMERGE_OPT="${QMERGE_OPT} -b ${BLOCKSIZE}"
-#         ;;
-#     esac
-#   done
-#   qmerge ${QMERGE_OPT} ${FILENAME} || { .log 1 \
-#   "QMERGE failed to change compression and/or block size"; exit 5; }
-#   rm ${FILENAME}
-#   .log 3 "QMERGE SUCCESS"
-# else
-#   cp ${FILENAME} ${OUTPUT}
-#   .log 3 "No compression/blocksize to change, file simply copied"
-# fi
+# 4. Copy data using dataselect, to a single output file
+cpulimit -l ${CPU_LIMIT} -f -q -- dataselect -Ps -s ${SELECT_FILE} \
++o ${FILENAME} @${INPUT_LIST}
 
-# # Looking for data compression type
-# RAW_COMP=$(msi -p ${FILENAME} | grep "encoding:" | cut -d':' -f2 | awk -F '[ ]' '{print $2$3}' | head -n 1)
-# # RAW_BLOCKSIZE=$(msi -p ${FILENAME} | grep "record length:" | cut -d':' -f2 | awk -F '[ ]' '{print $2$3}' | head -n 1)
-# # If it's difference we need to repack into new records
-# if ! [ ${RAW_COMP} == ${COMPRESS} ]; then
-#   qmerge -m -r -o ${OUTPUT} -b ${BLOCKSIZE} -O ${COMPRESS} ${FILENAME} || { .log 1 \
-#   "QMERGE failed to change compression and/or block size"; exit 5; }
-# else
-#   ## elif
-#   qmerge -m -o ${OUTPUT} -b ${BLOCKSIZE} -O ${COMPRESS} ${FILENAME} || { .log 1 \
-#   "QMERGE failed to change compression and/or block size"; exit 5; }
-# fi
-#
-# rm -f ${FILENAME}
-# .log 3 "QMERGE SUCCESS"
+############ CORRECT DATA ###############
+
 correct_seed.sh --log-level=${__VERBOSE} \
   --input-file=${FILENAME} \
   --output-dir=${WORKSPACE} \
   --blocksize=${BLOCKSIZE} \
   --encoding=${COMPRESS}
 
-#
-# Demux data and sort them in the appropriate structure.
-# dataselect -CHAN ${WORKSPACE} ${OUTPUT}
-# if [ $? -ne 0 ]; then
-#   .log 1 "Dataselect error"
-#   exit 5
-# fi
-# rm -f ${OUTPUT}
 rm -f ${INPUT_LIST}
 rm -f ${SELECT_FILE}
 .log 3 "LOCAL Script finished with success"

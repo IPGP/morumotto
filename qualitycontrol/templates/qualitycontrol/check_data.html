@@ -3,7 +3,7 @@
 <html>
   <head>
     <title>Morumotto</title>
-    {% include "home/headers/datatable.html" %}
+    {% include "home/headers/datepicker_datatable.html" %}
   </head>
 
   <body>
@@ -15,11 +15,6 @@
       </ol>
     </nav>
 
-    <div class="container">
-      <div class="alert alert-danger" role="alert">
-        <i class="fas fa-ghost"></i> Not available yet, currently under development
-      </div>
-    </div>
     <div class="container-fluid">
 
       <div class="row">
@@ -31,7 +26,7 @@
                 <div class="submit-link-row">
                   <h6><b>{{ field.label_tag }}</b></h6>
                   {{ field }}
-                  <br>
+                  <br><br>
                 </div>
                 {% if form.errors %}
                   {% for error in field.errors %}
@@ -41,7 +36,7 @@
                   {% endfor %}
                 {% endif %}
               {% endfor %}
-              <br>
+              
               <input type="submit" class="btn btn-sm btn-primary"  name="check_data" value="Check Data">
             </form>
           </div>

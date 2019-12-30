@@ -4,7 +4,7 @@ from django import forms
 from django.db import models
 from django.forms import modelformset_factory, formset_factory, BaseModelFormSet
 from form_utils.forms import BetterForm, BetterModelForm
-from seismicarchive.models import Configuration, Network, Request, Gap, Source
+from archive.models import Configuration, Network, Request, Gap, Source
 from monitoring.models import ArchiveMonitoring
 from qualitycontrol.models import QCConfig
 
@@ -14,7 +14,7 @@ class ConfigurationForm(BetterModelForm):
     class Meta:
         model = Configuration
         fields = "__all__"
-        exclude = ('networks', 'stations','nslc','config_name',
+        exclude = ('networks', 'stations','nslc','name',
                    'initialisation', 'crontab_status','source')
         widgets = {
             'archive': forms.TextInput(attrs={'class':'input-control'}),
@@ -30,14 +30,14 @@ class ConfigurationForm(BetterModelForm):
                            'blocksize', 'compression_format',
                            'quality_label'],
             }),
-            ('Update settings', {
+            ('Update settings (*)', {
                 'fields': ['request_lifespan_type',
                            'request_lifespan', 'n_request',
                            'max_gaps_by_analysis','sources',],
             }),
             ('Window of analysis', {
                 'fields': ['granularity_type',
-                           'f_analysis','w_analysis','l_analysis'],
+                           'f_analysis','w_analysis','l_analysis','crontime'],
             }),
 
         )

@@ -1,32 +1,37 @@
-# SiQaCo, user guide
+# Morumotto, user guide
 
-_Download PDF Version : [user_guide.pdf](https://k2.ipgp.fr/geber/siqaco/raw/master/docs/user_guide.pdf?inline=false)_
+_Download PDF Version : [user_guide.pdf](https://github.com/IPGP/morumotto/raw/master/docs/user_guide.pdf)_
 
 1. [Installation](#Installation )
 2. [Initialisation](#Initialisation )
-   1. [User friendly initialisation](#1. User friendly initialisation)
-       1. [Network](#1. Network initialisation)
-      2. [NSLC](#2. NSLC initialisation)
-      3. [Source](#3. Source initialisation)
-      4. [Update](#4. Update configuration)
-      5. [Monitoring](#5. Monitoring configuration)
-      6. [Quality Control](#6. Quality Control configuration)
-   2. [Admin initialisation](#2. Admin interface initialisation)
-   3. [Command line initialisation](#3. Command line initialisation)
+   1. [Using web interface](#Using web interface)
+       1. [NSLC](#NSLC initialisation)
+      3. [Source](#Source initialisation)
+      4. [Update](#Update configuration)
+      5. [Monitoring](#Monitoring configuration)
+      6. [Quality Control](#Quality Control configuration)
+   2. [Admin initialisation](#Admin interface initialisation)
+   3. [Command line initialisation](#Command line initialisation)
 3. [Users](#Users )
 4. [Basic commands](#Basic commands)
-   1. [Built-in commands](#1. Built-in commands)
-   2. [Software commands](#2. Software commands)
-   3. [Database dump](#3. Database dump)
+   1. [Built-in commands](#Built-in commands)
+   2. [Software commands](#Software commands)
+   3. [Database dump](#Database dump)
 5. [Functionalities](#Functionalities )
-   1. [Home page](#1. Home page)
-   2. [Monitoring](#2. Monitoring)
-   3. [Stack](#3. Stack)
-   4. [Quality Control](#4. Quality Control)
-   5. [Celery](#5. Celery)
-   6. [Crontab](#6. Crontab)
-   7. [Admin](#7. Admin)
-6. [New plugins](#New plugins)
+   1. [Home page](#Home page)
+   2. [Monitoring](#Monitoring)
+   3. [Stack](#Stack)
+   4. [Quality Control](#Quality Control)
+   5. [Celery](#Celery)
+   6. [Crontab](#Crontab)
+   7. [Admin](#Admin)
+   8. [Use Case](#Use Case)
+6. [Developers' guide](#Developer)
+   1. [Plugins](#Plugins)
+   2. [General structure](#General structure)
+   3. [IDE, development routine](#IDE, development routine)
+   4. [Use case](#Use case)
+   5. [API](#API)
 7. [Troubleshoot](#Troubleshoot )
 
 
@@ -36,8 +41,8 @@ _Download PDF Version : [user_guide.pdf](https://k2.ipgp.fr/geber/siqaco/raw/mas
 ##### Get source code
 
 ```sh
-git clone https://k2.ipgp.fr/geber/siqaco
-cd siqaco
+git clone https://github.com/IPGP/morumotto
+cd morumotto
 ```
 
 ##### METHOD 1 : With Installer
@@ -81,18 +86,18 @@ For the following steps, you must stay in this folder
     ```
 
 
-2. Install dataselect (version >= 3.20 ) in /siqaco/bin : ([Visit the IRIS GitHub page to install](https://github.com/iris-edu/dataselect "github.com/iris-edu/dataselect"))
+2. Install dataselect (version >= 3.20 ) in /morumotto/bin : ([Visit the IRIS GitHub page to install](https://github.com/iris-edu/dataselect "github.com/iris-edu/dataselect"))
 
 
-3. Install qmerge in /siqaco/bin : ([Download tar file here](http://www.ncedc.org/qug/software/ucb/qmerge.2014.329.tar.gz "ncedc.org/qug/software/ucb/qmerge.2014.329.tar.gz")). Then copy the qmerge executable to /siqaco/bin.
+3. Install qmerge in /morumotto/bin : ([Download tar file here](http://www.ncedc.org/qug/software/ucb/qmerge.2014.329.tar.gz "ncedc.org/qug/software/ucb/qmerge.2014.329.tar.gz")). Then copy the qmerge executable to /morumotto/bin.
 
-4. Install msi in /siqaco/bin : ([Visit the IRIS GitHub page to install](https://github.com/iris-edu/msi "github.com/iris-edu/msi"))
+4. Install msi in /morumotto/bin : ([Visit the IRIS GitHub page to install](https://github.com/iris-edu/msi "github.com/iris-edu/msi"))
 
-5. Install sdrsplit in /siqaco/bin : ([Download tar file here](http://www.ncedc.org/qug/software/ucb/sdrsplit.2013.260.tar.gz)) Then copy the sdrsplit executable to /siqaco/bin.
+5. Install sdrsplit in /morumotto/bin : ([Download tar file here](http://www.ncedc.org/qug/software/ucb/sdrsplit.2013.260.tar.gz)) Then copy the sdrsplit executable to /morumotto/bin.
 
 
 6. Install RabbitMQ (The parallel task are handled by the task queue manager [Celery](http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html#first-steps "First steps with celery").
-Celery requires to install a broker, SiQaCo uses RabbitMQ)  
+Celery requires to install a broker, Morumotto uses RabbitMQ)  
 
     In Ubuntu/Debian :    
 
@@ -109,24 +114,24 @@ Celery requires to install a broker, SiQaCo uses RabbitMQ)
     python --version
     ```
 
-2. Create the virtual environment (inside the _siqaco_ root directory)
+2. Create the virtual environment (inside the *morumotto* root directory)
 
     - If your python is < 3.3 :  
 
         ```sh
-        virtualenv siqaco-env -p python3.6
+        virtualenv morumotto-env -p python3.6
         ```
 
     - If your python is >= 3.4 :  
 
         ```sh
-        python3 -m venv siqaco-env
+        python3 -m venv morumotto-env
         ```
 
 3. Install requirements :  
 
     ```sh
-    source siqaco-env/bin/activate  
+    source morumotto-env/bin/activate  
     pip install numpy # needs to be installed first, doesn't work within requirements
     pip install -r requirements.txt
     ```
@@ -142,7 +147,7 @@ Celery requires to install a broker, SiQaCo uses RabbitMQ)
   - If prompt returns an empty string, you may use the leapsecond list provided here ()
 
     ```sh
-    echo "export LEAPSECONDS='${HOME}/siqaco/leapsecond.list'" >> ${HOME}/.bashrc
+    echo "export LEAPSECONDS='${HOME}/morumotto/leapsecond.list'" >> ${HOME}/.bashrc
     ```
 
     - Be sure to add new leap seconds to your LEAPSECONDS file when they are issued ! To update the leapsecond file : go to http://www.ncedc.org/ftp/pub/programs/leapseconds
@@ -151,7 +156,7 @@ Celery requires to install a broker, SiQaCo uses RabbitMQ)
 
 ##### Initialise your MySQL database
 
-Now, you will have to create a SiQaCo database within MySQL. To do so:
+Now, you will have to create a Morumotto database within MySQL. To do so:
 
 + connect to MySQL as root:  
 
@@ -164,23 +169,23 @@ Now, you will have to create a SiQaCo database within MySQL. To do so:
 
 
     ```sql
-    CREATE DATABASE SIQACO;
-    CREATE USER 'siqaco_user'@'localhost' IDENTIFIED BY 'your_password';
-    GRANT ALL ON SIQACO.* TO 'siqaco_user'@'localhost';
+    CREATE DATABASE MORUMOTTO;
+    CREATE USER 'morumotto_user'@'localhost' IDENTIFIED BY 'your_password';
+    GRANT ALL ON MORUMOTTO.* TO 'morumotto_user'@'localhost';
     FLUSH PRIVILEGES;
     ```
 
-Then add to your custom settings (siqaco/siqaco/custom_settings.py) :
+Then add to your custom settings (morumotto/morumotto/custom_settings.py) :
 
 ```python
 DATABASE_ENGINE = 'django.db.backends.mysql'
-DATABASE_NAME = 'SIQACO'
-DATABASE_USER_NAME = 'siqaco_user'
+DATABASE_NAME = 'MORUMOTTO'
+DATABASE_USER_NAME = 'morumotto_user'
 DATABASE_PASSWORD = 'your_password'
 DATABASE_HOST = 'your_host' #defaults to 127.0.0.1 to use local database
 ```
 
-There is a template in the siqaco/siqaco folder. Just duplicate it and remove the .template at the end of the file name and put your own settings in it. For the Allowed hosts, see below ("Access from another computer in the same network")
+There is a template in the morumotto/morumotto folder. Just duplicate it and remove the .template at the end of the file name and put your own settings in it. For the Allowed hosts, see below ("Access from another computer in the same network")
 
 
 _Note: you can change the database, user and password at your convinience, but they must be the same in the database and in the custom settings file_
@@ -188,26 +193,26 @@ _Note: you can change the database, user and password at your convinience, but t
 If you want to use another RDBMS (PostGreSQL for example), please check the [Django documentation](https://docs.djangoproject.com/en/dev/topics/install/#database-installation "Django Database Installation")
 
 
-##### Bind database tables to SiQaCo objects
+##### Bind database tables to Morumotto objects
 
-+ Inside the _siqaco_ root directory, execute
++ Inside the _morumotto_ root directory, execute
 
     ```sh
     python manage.py migrate  
-    python manage.py makemigrations seismicarchive monitoring qualitycontrol logdb
+    python manage.py makemigrations archive monitoring qualitycontrol logdb
     python manage.py migrate
     ```
 
 
 ##### Create an admin user :
 
-+ Inside the _siqaco_ directory, execute
++ Inside the _morumotto_ directory, execute
 
     ```sh
     python manage.py createsuperuser
     ```
 
-Fill the required informations. Don't forget it, it will be your administrator user for the SIQACO software
+Fill the required informations. Don't forget it, it will be your administrator user for the Morumotto software
 
 All good, you're ready to go now !
 
@@ -221,7 +226,7 @@ In a terminal, paste the following code (or run is in a script) :
 dir=$(pwd)
 cat <<EOT >> morumotto.conf
 [program:morumotto_celery]
-command = ${dir}/siqaco-env/bin/celery -A siqaco worker -l info
+command = ${dir}/morumotto-env/bin/celery -A morumotto worker -l info
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_celery.log
@@ -232,7 +237,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_flower]
-command = ${dir}/siqaco-env/bin/celery flower -A siqaco --address=127.0.0.1 --port=5555
+command = ${dir}/morumotto-env/bin/celery flower -A morumotto --address=127.0.0.1 --port=5555
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_flower.log
@@ -243,7 +248,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_runserver]
-command = ${dir}/siqaco-env/bin/python manage.py runserver 0.0.0.0:8000
+command = ${dir}/morumotto-env/bin/python manage.py runserver 0.0.0.0:8000
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_runserver.log
@@ -269,13 +274,12 @@ sudo supervisorctl update
 
 Create a file named morumotto.conf, and paste the following text inside :
 
-
-**WARNING : you must change ${dir} with your siqaco directory and ${USER} with your user name**
+**WARNING : you must change ${dir} with your morumotto directory and ${USER} with your user name**
 
 _morumotto.conf_
 ```sh
 [program:morumotto_celery]
-command = ${dir}/siqaco-env/bin/celery -A siqaco worker -l info
+command = ${dir}/morumotto-env/bin/celery -A morumotto worker -l info
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_celery.log
@@ -286,7 +290,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_flower]
-command = ${dir}/siqaco-env/bin/celery flower -A siqaco --address=127.0.0.1 --port=5555
+command = ${dir}/morumotto-env/bin/celery flower -A morumotto --address=127.0.0.1 --port=5555
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_flower.log
@@ -297,7 +301,7 @@ autostart = true
 autorestart = true
 
 [program:morumotto_runserver]
-command = ${dir}/siqaco-env/bin/python manage.py runserver 0.0.0.0:8000
+command = ${dir}/morumotto-env/bin/python manage.py runserver 0.0.0.0:8000
 user = ${USER}
 directory = ${dir}
 logfile = /var/log/supervisor/morumotto_runserver.log
@@ -328,12 +332,12 @@ sudo supervisorctl update
 
 You can initialise the software either manually in the admin interface, via command line _(but not yet)_ or using the web interface.
 
-### 1. User friendly initialisation
+### Using web interface
 
-After installation, open a terminal, navigate to your siqaco directory and execute :
+After installation, open a terminal, navigate to your morumotto directory and execute :
 
 ```sh
->$ source /siqaco-env/bin/activate
+>$ source /morumotto-env/bin/activate
 >$ python manage.py runserver
 ```
 
@@ -363,41 +367,25 @@ Now, let's do the initialisation step by step :
 
 
 
-#### 1. Network initialisation
-
-You shall see this window now :
-
-<img src="images/init_networks.png" alt="drawing" width="500"/>
-
-
-
-You can add several Networks codes here (like in the example), to add more lines use the ![](images/plus.png) button.
-
-If you already have an xml file containing all N.S.L.C. (Network Station Location Channel) that you are going to use, you can skip this page and just click on ![](images/next.png). More details about XML files in [section 2 below](#2. NSLC Initialisation).
-
-
-
-
-
-#### 2. NSLC Initialisation
+#### NSLC Initialisation
 
 You shall now see this window :
 
 <img src="images/init_nslc.png" alt="drawing" width="500"/>
 
-**IF** you have entered some Network codes on the [previous](#1. Network initialisation) page, you can now use a Webservice that will automatically find and save all N.S.L.C. available for this network on the given Client. This is using the [obspy library](https://docs.obspy.org/packages/obspy.clients.fdsn.html), and only works if you are online. This may find some N.S.L.C. that you don't want to use, you will be able to [delete them by hand later](#Delete NSLC)
+You have two options : 
 
-**Otherwise**, you can select an file containing all N.S.L.C. that you wish to use. In this file, NSLC must be | separated, like in the following example :
+**StationXML** : select a path to one station xml file containing all NSLC channels you want to use. If you use a stationXML file that only has station level, this will fail. Once you have selected your file, validate the form  by clicking on ![](images/file.png) 
 
-#Network | Station | Location | Channel
-G|AIS|00|BHE
-G|AIS|00|BHE
-G|AIS|00|BHE
-G|AIS|00|BHE
+**FDSNWS** : you can click on "FDSN Webservice" if you prefer to get all channels from a webservice. You will see this window :
 
-**Either way**, don't forget to validate the input by clicking on ![](images/fdsn.png) or ![](images/file.png)
+<img src="images/init_nslc_ws.png" alt="drawing" width="500"/>
 
-#### 3. Source initialisation
+First enter your Network name, if you want several networks, separate them with a coma. 
+
+You can choose a default Client, or a custom URL. When you are done, click on ![](images/fdsn.png) 
+
+#### Source initialisation
 
 You shall now see the following window :
 
@@ -409,7 +397,7 @@ For now, let's say we want to use the IPGP FDSN Webservice to get data, so we ne
 
 
 
-#### 4. Update configuration
+#### Update configuration
 
 You will now see this window :
 
@@ -439,7 +427,7 @@ Configure the window of analysis
 
 
 
-#### 5. Monitoring configuration
+#### Monitoring configuration
 
 You shall now see this window :
 
@@ -449,7 +437,7 @@ You shall now see this window :
 - Give the year to start the analysis and the year to end it. You can change this later.
 - Give the Data format and the data structure of your archive (they should match your update configuration values, instead, again, it's nonsense)
 
-#### 6. Quality Control configuration
+#### Quality Control configuration
 
 You shall now see this window :
 
@@ -458,7 +446,7 @@ You shall now see this window :
 - Choose the path where you have you data and metadata
 - Choose the metadata format
 
-Now logout from your admin session (top right menu) : 
+Now logout from your admin session (top right menu) :
 
 <img src="images/logout.png" alt="drawing" width="250"/>
 
@@ -467,13 +455,13 @@ And you are done.
 
 
 
-### 2. Admin interface initialisation
+### Admin interface initialisation
 
 This is kind of fastidious... _Coming soon though._
 
 
 
-### 3. Command line initialisation
+### Command line initialisation
 
 See below [Initialise software](#2. Software commands)
 
@@ -481,7 +469,7 @@ See below [Initialise software](#2. Software commands)
 
 ## Users
 
-The software comes with 3 levels of use : basic, advanced and admin. 
+The software comes with 3 levels of use : basic, advanced and admin.
 
 ##### Basic user
 
@@ -501,9 +489,9 @@ The advanced user can access to all pages accessible by basic users, plus all th
 
 ##### Admin
 
-The admin can access all pages and functionalities accessible by advanced users, plus the admin interface,  the logs & the Celery Queue Monitor. 
+The admin can access all pages and functionalities accessible by advanced users, plus the admin interface,  the logs & the Celery Queue Monitor.
 
-#### User creation 
+#### User creation
 
 First of all, you NEED to have an admin : see [Create an admin user](#Create an admin user :)
 
@@ -517,7 +505,7 @@ When you save it, you access another page where you can define the roles :
 
 <img src="images/permissions.png" alt="drawing" width="700"/>
 
-To create another admin, select the superuser status. 
+To create another admin, select the superuser status.
 
 
 
@@ -527,13 +515,13 @@ To custom the database objects a user can view/edit, you may use the Staff statu
 
 #### Reset Password
 
-You can reset password from the login page : 
+You can reset password from the login page :
 
 <img src="images/passwordreset.png" alt="drawing" width="400"/>
 
 __IMPORTANT__ : This is working only for user who have set there emails
 
-_Note_ : As is, the software will not send any emails. Please check the _siqaco/settings.py_ file to see how to configure mail. By default, the software will create a _send_mails_ folder and you will find instructions here to change password.
+_Note_ : As is, the software will not send any emails. Please check the _morumotto/settings.py_ file to see how to configure mail. By default, the software will create a _send_mails_ folder and you will find instructions here to change password.
 
 ##### You can also set password with the following command line :
 
@@ -546,12 +534,12 @@ python manage.py changepassword <username>
 <div style="page-break-after: always;"></div>
 ## Basic commands
 
-First of all, the software has it's own python environment, which is located inside the *siqaco-env/* directory.
+First of all, the software has it's own python environment, which is located inside the *morumotto-env/* directory.
 
-You need to **activate** this environment before doing anything, otherwise it will not work. To do so, in the *siqaco/* directory, run :
+You need to **activate** this environment before doing anything, otherwise it will not work. To do so, in the *morumotto/* directory, run :
 
 ```sh
->$ source siqaco-env/bin/activate
+>$ source morumotto-env/bin/activate
 ```
 
 To deactivate the environment, you can just run the following command (anywhere) :
@@ -588,7 +576,7 @@ Let's review the built-in useful commands then the commands to run the software.
 
   More infos [in the django documentation](https://docs.djangoproject.com/fr/2.1/ref/django-admin/)
 
-  _(*) Note : to be able to access the software remotely, you need to add the IP address of the server where you installed the software, let's say 1.2.3.4, to the "ALLOWED_HOSTS" in the siqaco/siqaco/settings.py file. It will be something like :_
+  _(*) Note : to be able to access the software remotely, you need to add the IP address of the server where you installed the software, let's say 1.2.3.4, to the "ALLOWED_HOSTS" in the morumotto/morumotto/settings.py file. It will be something like :_
 
   _ALLOWED_HOSTS = [ "1.2.3.4", "127.0.0.1", ]_
 
@@ -597,7 +585,7 @@ Let's review the built-in useful commands then the commands to run the software.
 The software uses the Django ORM to manage database. In case of someone adding a new class to the code, you have to create database instances corresponding to this model after pulling code from gitlab.
 
 ```sh
->$ python manage.py makemigrations qualitycontrol seismicarchive monitoring logdb
+>$ python manage.py makemigrations qualitycontrol archive monitoring logdb
 >$ #then to make these migrations effective :
 >$ python manage.py migrate
 ```
@@ -615,7 +603,7 @@ It will show where are located the commands used by the software
 - Initialize software _(not available yet)_
 
 ```sh
->$ python manage.py init_setup config_file siqaco/setup.xml --nslc_file siqaco/nslc.list --source_file siqaco/sources.xml
+>$ python manage.py init_setup config_file morumotto/setup.xml --nslc_file morumotto/nslc.list --source_file morumotto/sources.xml
 ```
 
 This command will parse the setup.xml (and optionally nslc.list and sources.xml) into the database. You can custom those file at your convenience.
@@ -771,33 +759,11 @@ python manage.py loaddata > db.json
 
 
 
+### 8. Use Cases
+
 
 
 <div style="page-break-after: always;"></div>
-## New plugins
-
-### 1. New source
-
-- Class
-- Source script
-
-
-
-### 2. New _(meta)_data format
-
-- Class
-- set_patch script
-
-
-
-### 3. New data structure
-
-- Class
-
-
-
-
-
 
 
 
@@ -818,7 +784,7 @@ SyntaxError: invalid syntax
 This means you forgot to activate your environment. Simply run
 
 ```sh
->$ source /siqaco-env/bin/activate
+>$ source /morumotto-env/bin/activate
 ```
 
 and run your command again.
@@ -837,36 +803,38 @@ and run your command again.
 >
 > Just go to your corresponding database terminals and delete all the records from you django_migrations table with
 >
->```mysql
->delete from django_migrations;
->```
+> ```mysql
+> delete from django_migrations;
+> ```
 >
 > *Step 2:* Remove all the files in migrations folders in each and every app of your project.
 >
 > Go to terminal and run remove all files in migrations folder with
 >
->```sh
->rm -rf <app>/migrations/
->```
+> ```sh
+> rm -rf <app>/migrations/
+> ```
 >
 > *Step 3:* Reset the migrations for the "built-in" apps:
 >
 > Reset all the migrations of the Django's built-in apps like admin with the command
 >
->```sh
->python manage.py migrate --fake
->```
+> ```sh
+> python manage.py migrate --fake
+> ```
 >
 > *Step 4:* Create initial migrations for each and every app:  
 >
 > **For each app run:**  
 >
->  `python manage.py makemigrations <app>.`  
+> `python manage.py makemigrations <app>.`  
 >
 > **Note:** Take care of dependencies (models with ForeignKey's should run after their parent model).  
 >
 > *Step 5:* Final step is to create fake initial migrations:  To create initial fake migrations just run
 >
->  `python manage.py migrate --fake-initial`  
+> `python manage.py migrate --fake-initial`  
 >
-> With all the above five steps all the initial migrations will be  created for the existing database schema. Now you can use the Django's  migrations system normally. To test if the migrations are succeeded or  not, just add a new field to any of the models and run **python manage.py make migrations** and then it will create a migration file in the corresponding migrations folder of the corresponding app, and then run **python manage.py migrate**. If this succeeds our above steps are the success and you can enjoy the beauty of Django's migrations.
+> With all the above five steps all the initial migrations will be  created for the existing database schema. Now you can use the Django's  migrations system normally. To test if the migrations are succeeded or  not, just add a new field to any of the models and run **python manage.py make migrations** and then it will create a migration file in the corresponding migrations folder of the corresponding app, and then run **python manage.py migrate**. If this succeeds our above steps are the success and you can enjoy the beauty of Django's migrations.com
+>
+> 

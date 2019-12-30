@@ -4,7 +4,7 @@ import os
 import fnmatch
 from datetime import datetime
 from glob import glob
-import siqaco.toolbox as toolbox
+import morumotto.toolbox as toolbox
 import logging
 
 logger = logging.getLogger('Status')
@@ -25,15 +25,25 @@ class AbstractStructure():
 
     """
     @abc.abstractmethod
+    def create_struct(self, archive, years, nslc_list):
+        pass
+    @abc.abstractmethod
     def browse(self, archive):
         pass
     @abc.abstractmethod
-    def create_struct(self, parameters, archive, years,
-                      net_list, stas_list, chan_list
-                      ):
+    def get_path(self, archive, nslc, year):
         pass
     @abc.abstractmethod
-    def get_path(self, nslc):
+    def get_filepattern(self, nslc, jday , year):
+        pass
+    @abc.abstractmethod
+    def get_filelist(self, archive, nslc_list, starttime, endtime):
+        pass
+    @abc.abstractmethod
+    def pattern(self, year, nslc_code):
+        pass
+    @abc.abstractmethod
+    def nslc_from_archive(self, archive):
         pass
 
 

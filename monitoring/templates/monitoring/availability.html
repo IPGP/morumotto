@@ -23,11 +23,11 @@
                   {% if comp not in others_list %}
                     {% if comp == comp_id %}
                         <li class="nav-item">
-                          <a class="nav-link active" href="{{'#tab_'|add:comp}}" data-toggle="tab">{{comp}}</a>
+                          <a class="nav-link active" href="{{'#tab_'|add:comp}}" data-toggle="tab">{{network_id}}.{{comp}}</a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                          <a class="nav-link" href="{{'#tab_'|add:comp}}" data-toggle="tab">{{comp}}</a>
+                          <a class="nav-link" href="{{'#tab_'|add:comp}}" data-toggle="tab">{{network_id}}.{{comp}}</a>
                         </li>
                     {% endif %}
                   {% endif%}
@@ -35,11 +35,11 @@
                 {% if others_list %}
                   {% if comp_id in others_list %}
                       <li class="nav-item">
-                        <a class="nav-link active" href="#tab_Others" data-toggle="tab">Others</a>
+                        <a class="nav-link active" href="#tab_Others" data-toggle="tab">Others ({{network_id}})</a>
                       </li>
                   {% else %}
                     <li class="nav-item">
-                      <a class="nav-link" href="#tab_Others" data-toggle="tab">Others</a>
+                      <a class="nav-link" href="#tab_Others" data-toggle="tab">Others ({{network_id}})</a>
                     </li>
                   {% endif %}
                 {% endif %}
@@ -135,7 +135,7 @@
         $("#monitBtn").addClass("active");
         $("#availabilityDd").addClass("active");
         $("#logDd").attr("href","/admin/logdb/monitoringlog/");
-        $("#adminDd").attr("href","/admin/seismicarchive/sourceavailability/");
+        $("#adminDd").attr("href","/admin/archive/sourceavailability/");
         draw_avail()
       });
 
@@ -246,7 +246,7 @@
                 legend:{
                   // enabled:false,
                   // has_data_text : "Data available",
-                  has_no_data_text 	: "Remainig gaps",
+                  has_no_data_text 	: "Remaining gaps",
                 },
                 display_date_range: [new Date(year, 0, 1),new Date(year, 12, 31)],
                 date_in_utc:false,

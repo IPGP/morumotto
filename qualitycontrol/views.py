@@ -1,22 +1,24 @@
 # -*- coding: utf-8 -*-
 import os
 import logging
+from obspy.clients.fdsn import Client
 from datetime import datetime
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.template import loader
-from siqaco import toolbox
+from morumotto import toolbox, cronjobs
 from plugins import structure, format
 from .forms import GetMetadataForm, MetadataFolderForm, MetadataWSForm,\
-    MetadataSVNForm, NSLCForm, NSLCUniqueForm
+    MetadataSVNForm, MetadataForm, MetadataUniqueForm, MetadataDatesForm,\
+    NSLCYearForm, MetadataYearForm
 from .models import Metadata, LastUpdate, QCConfig
-from .qc import metadata_from_dir, metadata_from_webservice, \
-    metadata_from_svn
+from archive.models import Configuration, NSLC
+from .qc import md_from_dir, md_from_webservice, \
+    md_from_svn, md_check
 from plugins.metadata_format import DatalessSEED
 from plugins.format import miniSEED
-from siqaco import cronjobs
-
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,7 +66,7 @@ def update_metadata(request):
         dir_form = MetadataFolderForm(request.POST)
         if dir_form.is_valid():
             dirname = dir_form.cleaned_data.get('dir')
-            metadata_from_dir(config, dirname)
+            md_from_dir(config, dirname)
             last_update.update_method = "local_dir"
             last_update.options = dirname
             last_update.time = datetime.now()
@@ -76,21 +78,26 @@ def update_metadata(request):
         ws_form = MetadataWSForm(request.POST)
         if ws_form.is_valid():
             client = ws_form.cleaned_data.get('client')
-            metadata_from_webservice(config,client)
-            last_update.update_method = "web_service"
-            last_update.options = client
-            last_update.time = datetime.now()
-            last_update.save()
-            cronjobs.get_mdata_create_cronjob()
+            try:
+                md_from_webservice(config,Client(client))
+                last_update.update_method = "web_service"
+                last_update.options = client
+                last_update.time = datetime.now()
+                last_update.save()
+                cronjobs.get_mdata_create_cronjob()
+            except ValueError as err:
+                messages.error(request,"The FDSN service base URL `%s`"
+                               " is not a valid URL" %client)
+                logger.exception(err)
     else:
         ws_form = MetadataWSForm()
     if request.POST.get("svn_update"):
         svn_form = MetadataSVNForm(request.POST)
         if svn_form.is_valid():
-            svn_address, username, password  = svn_form.cleaned_data.get('svn_address','username', 'password')
-            # username = svn_form.cleaned_data.get('username')
-            # password = svn_form.cleaned_data.get('password')
-            metadata_from_svn(config, svn_address, username, password)
+            svn_address = svn_form.cleaned_data.get('svn_address')
+            username = svn_form.cleaned_data.get('username')
+            password = svn_form.cleaned_data.get('password')
+            md_from_svn(config, svn_address, username, password)
             last_update.update_method = "svn"
             last_update.options = "%s,%s,%s" %(svn_address, username, password)
             last_update.time = datetime.now()
@@ -108,14 +115,20 @@ def update_metadata(request):
 
 
 def check_metadata(request):
+    if QCConfig.objects.count() == 0:
+        logger.error("no QC configuration")
+        return HttpResponseRedirect('/home/init_qcconfig')
+    config = QCConfig.objects.first()
     metadata = Metadata.objects.none()
     if request.POST.get("check_metadata"):
-        form = NSLCForm(request.POST)
+        form = MetadataDatesForm(request.POST)
         if form.is_valid():
             metadata = form.cleaned_data.get('nslc_list')
-            # Metadata check HERE
+            starttime = form.cleaned_data.get('starttime')
+            endtime = form.cleaned_data.get('endtime')
+            md_check(config, nslc_list, starttime, endtime)
     else:
-        form = NSLCForm()
+        form = MetadataDatesForm()
     context = { "form" : form }
     context["metadata_report"] = metadata
     return render(request, 'qualitycontrol/check_metadata.html', context)
@@ -124,11 +137,11 @@ def check_metadata(request):
 def map_stations(request):
     metadata = Metadata.objects.none()
     if request.POST.get("display_stations"):
-        form = NSLCForm(request.POST)
+        form = MetadataForm(request.POST)
         if form.is_valid():
             metadata = form.cleaned_data.get('nslc_list')
     else:
-        form = NSLCForm()
+        form = MetadataForm()
     context = { "form" : form }
     context["metadata"] = metadata
     context["online"] = toolbox.is_online()
@@ -136,20 +149,25 @@ def map_stations(request):
 
 
 def plot_response(request):
+    if QCConfig.objects.count() == 0:
+        logger.error("no QC configuration")
+        return HttpResponseRedirect('/home/init_qcconfig')
+    config = QCConfig.objects.first()
     extension = "svg"
     figure = False
     filename = None
     metadata = Metadata.objects.none()
-    dataless = DatalessSEED()
+    md_format = config.get_metadata_format()
     if request.POST.get("plot_resp"):
-        form = NSLCUniqueForm(request.POST)
+        form = MetadataUniqueForm(request.POST)
         if form.is_valid():
             metadata = form.cleaned_data.get('nslc')
+            starttime = form.cleaned_data.get('starttime')
             filename = metadata.nslc.code
             output = PLOT_DIR + filename + ".resp." + extension
-            figure = dataless.resp_plot(metadata,output)
+            figure = md_format.resp_plot(metadata,output)
     else:
-        form = NSLCUniqueForm()
+        form = MetadataUniqueForm()
     context = { "form" : form }
     context["metadata"] = metadata
     context["figure"] = figure
@@ -161,12 +179,17 @@ def plot_response(request):
 def metadata_vs_data(request):
     metadata = Metadata.objects.none()
     if request.POST.get("check_metadata_vs_data"):
-        form = NSLCForm(request.POST)
+        form = MetadataDatesForm(request.POST)
         if form.is_valid():
             metadata = form.cleaned_data.get('nslc_list')
-            # metadata vs data check here
+            starttime = form.cleaned_data.get('starttime')
+            endtime = form.cleaned_data.get('endtime')
+            # Check encoding (= config.compression_format)
+            # Check blocking (= config.blocksize)
+            # Check encoding is big endian in data & metadata
+            # Check sample rate in data and metadata
     else:
-        form = NSLCForm()
+        form = MetadataDatesForm()
     context = { "form" : form }
     context["metadata_vs_data_report"] = metadata
     return render(request, 'qualitycontrol/metadata_vs_data.html', context)
@@ -174,12 +197,21 @@ def metadata_vs_data(request):
 def check_data(request):
     metadata = Metadata.objects.none()
     if request.POST.get("check_data"):
-        form = NSLCForm(request.POST)
+        form = MetadataDatesForm(request.POST)
         if form.is_valid():
             metadata = form.cleaned_data.get('nslc_list')
-            # Check data here
+            starttime = form.cleaned_data.get('starttime')
+            endtime = form.cleaned_data.get('endtime')
+            datafiles = DataFiles.objects.filter(nslc__in=metadata.nslc)
+            print(datafiles)
+            #  Check NET CODE
+            #  Check data list
+            #  Data before start of metadata ?
+            #  Check Name = N.S.L.C in metadata
+            #  Check Channels names
+
     else:
-        form = NSLCForm()
+        form = MetadataDatesForm()
     context = { "form" : form }
     context["data_report"] = metadata
     return render(request, 'qualitycontrol/check_data.html', context)
@@ -188,20 +220,28 @@ def plot_completion(request):
     extension = "svg"
     figure = False
     filename = None
-    metadata = Metadata.objects.none()
-    seed = miniSEED()
 
+    if Configuration.objects.count() == 0:
+        logger.error("no QC configuration")
+        return HttpResponseRedirect('/home/init_qcconfig')
+    config = Configuration.objects.first()
+    archive = config.archive
+    nslc = config.nslc.none()
+    data_format = config.get_data_format()
+    struct = config.struct_type
     if request.POST.get("plot_complt"):
-        form = NSLCUniqueForm(request.POST)
+        form = NSLCYearForm(request.POST)
         if form.is_valid():
-            metadata = form.cleaned_data.get('nslc')
-            filename = metadata.nslc.code
+            nslc = form.cleaned_data.get('nslc')
+            year = str(form.cleaned_data.get('year')).split('-')[0]
+            filename = nslc.code
             output = PLOT_DIR + filename + ".complt." + extension
-            figure = seed.completion(metadata,output) # Not implemented yet
+            figure = data_format.plot_completion(nslc.code, year,
+                                                 output,archive,struct)
     else:
-        form = NSLCUniqueForm()
+        form = NSLCYearForm()
     context = { "form" : form }
-    context["metadata"] = metadata
+    context["nslc"] = nslc
     context["figure"] = figure
     context["extension"] = extension
     context["filename_id"] = filename
