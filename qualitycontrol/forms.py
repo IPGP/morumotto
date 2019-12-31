@@ -98,7 +98,7 @@ class MetadataYearForm(forms.Form):
 
 
 class MetadataDatesForm(forms.Form):
-    nslc_list = forms.ModelMultipleChoiceField(queryset=Metadata.objects.all(),
+    metadata_list = forms.ModelMultipleChoiceField(queryset=Metadata.objects.all(),
                                           widget=forms.SelectMultiple(
                                                 attrs={'size': 16}),
                                           label="Select channel(s)",

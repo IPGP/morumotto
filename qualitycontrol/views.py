@@ -123,10 +123,10 @@ def check_metadata(request):
     if request.POST.get("check_metadata"):
         form = MetadataDatesForm(request.POST)
         if form.is_valid():
-            metadata = form.cleaned_data.get('nslc_list')
+            metadata_list = form.cleaned_data.get('metadata_list')
             starttime = form.cleaned_data.get('starttime')
             endtime = form.cleaned_data.get('endtime')
-            md_check(config, nslc_list, starttime, endtime)
+            md_check(config, metadata_list, starttime, endtime)
     else:
         form = MetadataDatesForm()
     context = { "form" : form }
@@ -181,7 +181,7 @@ def metadata_vs_data(request):
     if request.POST.get("check_metadata_vs_data"):
         form = MetadataDatesForm(request.POST)
         if form.is_valid():
-            metadata = form.cleaned_data.get('nslc_list')
+            metadata_list = form.cleaned_data.get('metadata_list')
             starttime = form.cleaned_data.get('starttime')
             endtime = form.cleaned_data.get('endtime')
             # Check encoding (= config.compression_format)
@@ -199,7 +199,7 @@ def check_data(request):
     if request.POST.get("check_data"):
         form = MetadataDatesForm(request.POST)
         if form.is_valid():
-            metadata = form.cleaned_data.get('nslc_list')
+            metadata_list = form.cleaned_data.get('metadata_list')
             starttime = form.cleaned_data.get('starttime')
             endtime = form.cleaned_data.get('endtime')
             datafiles = DataFiles.objects.filter(nslc__in=metadata.nslc)

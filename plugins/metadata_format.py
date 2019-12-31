@@ -22,7 +22,7 @@ class MetadataFormat():
     def validate(self, metadata_path):
         pass
     @abc.abstractmethod
-    def write_metadata(self):
+    def write_metadata(self,inventory,filename):
         pass
     @abc.abstractmethod
     def resp_plot(self,metadata,outfile):
@@ -48,7 +48,7 @@ class DatalessSEED(MetadataFormat):
 
         result = subprocess.run(validator_script, stdout=subprocess.PIPE)
 
-    def write_metadata(self):
+    def write_metadata(self,inventory,filename):
         pass
 
     def resp_plot(self,metadata,outfile):
@@ -75,8 +75,7 @@ class stationXML(MetadataFormat):
 
     def validate(self, metadata_path):
         outfile = os.path.join(metadata_path,"LOG.txt")
-        validator_script = ["java","-jar", self.validator, metadata_path,
-                            "--format csv" ]
+        validator_script = ["java","-jar", self.validator, metadata_path, "--format", "csv" ]
 
         result = subprocess.run(validator_script, stdout=subprocess.PIPE)
         print(result)

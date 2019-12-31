@@ -134,7 +134,7 @@ if ! [[ -h "${dir}/bin/stationxml-validator.jar" ]]; then
   echo -e "Can't install stationxml-validator, please install it and re-run this script"
   mv stationxml-validator-1.6.0.2-SNAPSHOT.jar ${dir}/bin
   mv station-xml-validator-1.5.9.5.jar ${dir}/bin
-  ln -s station-xml-validator-1.5.9.5.jar ${dir}/bin/stationxml-validator.jar
+  ln -s ${dir}/bin/station-xml-validator-1.5.9.5.jar ${dir}/bin/stationxml-validator.jar
 else
   echo -e "\nINFO: stationxml-validator already installed."
 fi
