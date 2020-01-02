@@ -419,11 +419,29 @@ _scripts/_ contains previous scripts to perform qc on datalessSeed, but it is ob
 
 <img src="images/plugins.png" alt="connect" width="500"/>
 
+Plugin is divided in 2 directories, containing set_patch scripts and sources scripts, and 5 files containing the python classes definition for plugins. 
+
+
+
+_choices.py_ handles the plugins to be available in the Django models choices
+
+_format.py_ contains classes to use several data format. At the moment only miniseed has been developed
+
+_metadata_format.py_ contains classes to use several metadata format
+
+_sources.py_ contains all classes to access different sources plugins
+
+_structure.py_ contains all classes to handle different kind of structure (for the final archive only)
+
 
 
 #### Patch data
 
 <img src="images/workingdir.png" alt="connect" width="500"/>
+
+Patched data (which are made during the morumotto request execution) are stored in the Working directory, each request has its own directory (starting with the request's id). Data fetched by sources are to be found in subdirectories with the name of the source (eg. IPGP_FDSN), in this directory there must only be data with the standardised name NET.STA.LOC.CHAN
+
+The log.txt contains all informations from each plugin script execution, the other files are created by the set_patch algorithm. The SDS directory contains data which will be merged into the final archive
 
 
 
@@ -431,27 +449,33 @@ _scripts/_ contains previous scripts to perform qc on datalessSeed, but it is ob
 
 <img src="images/home.png" alt="connect" width="500"/>
 
+As said above, all CSS and JS scripts are stored in the _home/static/home_ directory, for a matter of accessibility within the django templates.
 
+_templates/home/_ directory contains all initialisation modals (which are displayed on the first use), the _headers_ subdirectory contains several script to load the proper javascript libraries necessary for a given page. 
 
-#### Initialisation
+_footer.html_ is the script to display the footer in the _morumotto_ interface
 
+_index.html_ contains the informations for the _/home_ page
 
+_templatetags_ contains two functions needed on the home page
 
-#### Static files
+_forms.py_ and _initialisation.py_ contain respectively the forms and the backend functions needed by the initialisation wizard, feel free to have a look there
 
-
-
-#### Header & Footer
-
-
+_views.py_ as usual contains backend for the home page and initialisation modals
 
 ### Admin Templates
 
 <img src="images/admin_templates.png" alt="connect" width="500"/>
 
+Admin templates are scripts to overwrite the admin page, change colors, handles the group display.
+
+_registration_ handles the user/password creation
+
 ## Algorithms 
 
 ### Data Update
+
+
 
 gaps overlaps
 

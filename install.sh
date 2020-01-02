@@ -246,7 +246,7 @@ CUSTOM_HOSTS = []\n\
 OR, run this script again and accept to initialize the database"
   exit
 fi
-exit
+
 #________________________CREATE VIRTUAL ENV________________________#
 echo -e "\nCreating python virtual environment\n"
 # Installing virtualenv

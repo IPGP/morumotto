@@ -1,0 +1,36 @@
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.json
+
+bin/*
+zin morumotto *
+*WORKING_DIR
+*/migrations
+celerybeat-schedule.db
+celerybeat.pid
+*.swp
+node_modules
+morumotto/custom_settings.py
+morumotto/custom_settings.py
+morumotto/crontab_settings.py
+*PLOT/
+siqaco-env
+morumotto-env
+run_morumotto.py
+scheduler
+final_archive
+test_patch.sh
+morumotto/setup.xml
+morumotto/nslc.list
+morumotto/sources.xml
+dark_theme.sh
+SiQaCo
+sent_emails
