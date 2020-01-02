@@ -124,9 +124,12 @@ Celery requires to install a broker, Morumotto uses RabbitMQ)
 
 2. Create the virtual environment (inside the _morumotto_ root directory)
 
-    - If your python is < 3.3 :  
+    - If your python is < 3.3 :
+
+        Install virtualenv, then create environment
 
         ```sh
+        sudo apt install virtualenv
         virtualenv morumotto-env -p python3.6
         ```  
 
@@ -155,14 +158,14 @@ Celery requires to install a broker, Morumotto uses RabbitMQ)
   - If prompt returns an empty string, you may use the leapsecond list provided here ()
 
     ```sh
-    echo "export LEAPSECONDS='${HOME}/morumotto/leapsecond.list'" >> ${HOME}/.bashrc
+    echo "export LEAPSECONDS='${MORUMOTTO_ROOT_DIR}/leapsecond.list'" >> ${HOME}/.bashrc
     ```
 
     - Be sure to add new leap seconds to your LEAPSECONDS file when they are issued ! To update the leapsecond file : go to http://www.ncedc.org/ftp/pub/programs/leapseconds
 
 
 
-##### Initialise your MySQL database
+##### Initialise your MySQL database (If you are using PostgreSQL, skip this paragraph)
 
 Now, you will have to create a Morumotto database within MySQL. To do so:
 
@@ -180,6 +183,7 @@ Now, you will have to create a Morumotto database within MySQL. To do so:
     CREATE DATABASE MORUMOTTO;
     CREATE USER 'morumotto_user'@'host' IDENTIFIED BY 'your_password';
     GRANT ALL ON MORUMOTTO.* TO 'morumotto_user'@'host';
+    ALTER DATABASE `MORUMOTTO` CHARACTER SET utf8;
     FLUSH PRIVILEGES;
     ```
 
@@ -191,14 +195,53 @@ DATABASE_NAME = 'MORUMOTTO'
 DATABASE_USER_NAME = 'morumotto_user'
 DATABASE_PASSWORD = 'your_password'
 DATABASE_HOST = 'your_host' #defaults to 127.0.0.1 to use local database
+CUSTOM_HOSTS = []
 ```  
 
-There is a template in the morumotto/morumotto folder. Just duplicate it and remove the .template at the end of the file name and put your own settings in it. For the Allowed hosts, see below ("Access from another computer in the same network")
+There is a template in the morumotto/morumotto folder. Just duplicate it and remove the .template at the end of the file name and put your own settings in it. For the custom hosts, see below ("Access from another computer in the same network")
 
 
 _Note: you can change the database, user and password at your convinience, but they must be the same in the database and in the custom settings file_
 
-If you want to use another RDBMS (PostGreSQL for example), please check the [Django documentation](https://docs.djangoproject.com/en/dev/topics/install/#database-installation "Django Database Installation")
+##### Initialise your PostgreSQL database (If you are using mysql, skip this paragraph)
+
+First:
+
++ connect to PostgreSQL as root:  
+
+    ```sh
+    psql -U postgres
+    ```
+
++ enter root password
++ in the _postgresql_ prompt, type:
+
+
+    ```sql
+    CREATE DATABASE MORUMOTTO;
+    CREATE USER morumotto_user WITH ENCRYPTED PASSWORD 'some password';
+    ALTER ROLE morumotto_user SET client_encoding TO 'utf8';
+    ALTER ROLE morumotto_user SET default_transaction_isolation TO 'read committed';
+    ALTER ROLE morumotto_user SET timezone TO 'UTC';
+    GRANT ALL PRIVILEGES ON DATABASE MORUMOTTO to morumotto_user;
+    ```
+
+Then add to your custom settings (morumotto/morumotto/custom_settings.py) :
+
+```python
+DATABASE_ENGINE = 'django.db.backends.postgresql'
+DATABASE_NAME = 'MORUMOTTO'
+DATABASE_USER_NAME = 'morumotto_user'
+DATABASE_PASSWORD = 'your_password'
+DATABASE_HOST = 'your_host' #defaults to 127.0.0.1 to use local database
+CUSTOM_HOSTS = []
+```  
+
+There is a template in the morumotto/morumotto folder. Just duplicate it and remove the .template at the end of the file name and put your own settings in it. For the custom hosts, see below ("Access from another computer in the same network")
+
+
+
+If you want to use another RDBMS (NoSQL for example), please check the [Django documentation](https://docs.djangoproject.com/en/dev/topics/install/#database-installation "Django Database Installation")
 
 
 ##### Bind database tables to Morumotto objects

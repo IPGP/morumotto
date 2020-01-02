@@ -150,7 +150,7 @@ def md_from_dir(config, dirname):
 
 
 
-def md_check(config, nslc_list, starttime=None,endtime=None):
+def md_check(config, metadata_list, starttime=None,endtime=None):
     """
 
     This method will perform some validations on your metadata list
@@ -158,7 +158,6 @@ def md_check(config, nslc_list, starttime=None,endtime=None):
     """
 
     md_format = config.get_metadata_format()
-    metadata_list = Metadata.objects.filter(nslc__in=nslc_list)
     for metadata in metadata_list:
         error_list, warning_list = md_format.validate(metadata.file)
         for error in error_list:

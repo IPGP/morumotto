@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     'bootstrap_datepicker_plus',
     'bootstrap4',
     'tempus_dominus',
-    'bootstrap_modal_forms',
+    # 'bootstrap_modal_forms',
     'betterforms',
     'reset_migrations',
     'admin_reorder',
