@@ -161,11 +161,17 @@ def md_check(config, metadata_list, starttime=None,endtime=None):
     for metadata in metadata_list:
         error_list, warning_list = md_format.validate(metadata.file)
         for error in error_list:
-            error_msg = Message(type='error',msg=error)
+            error_start = error[1]
+            error_end = error[2]
+            # test starttime, endtime
+            error_msg = Message(type='error',msg=error[0])
             metadata.messages.add(error_msg)
             metadata.save()
         for warning in warning_list:
-            warning_msg = Message(type='warning',msg=warning)
+            warning_start = warning[1]
+            warning_end = warning[2]
+            # test starttime, endtime
+            warning_msg = Message(type='warning',msg=warning[0])
             metadata.messages.add(warning_msg)
             metadata.save()
 

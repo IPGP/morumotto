@@ -74,18 +74,31 @@ class stationXML(MetadataFormat):
         return read_inventory(metadata_path)
 
     def validate(self, metadata_path):
+        """
+            output must be "['message',starttime, endtime]"
+        """
         outfile = os.path.join(metadata_path,"LOG.txt")
         validator_script = ["java","-jar", self.validator, metadata_path, "--format", "csv" ]
 
         result = subprocess.run(validator_script, stdout=subprocess.PIPE)
-        print(result)
+        i=0
+        output = result.stdout.decode('utf-8').split("\n")
         error_list = list()
         warning_list = list()
 
+        for o in output:
+            starttime = o.split(",")[7]
+            endtime = o.split(",")[8]
+            mess_type = o.split(",")[2].lower()
+            mess = o.split(",")[9]
+            if mess_type == "warning":
+                warning_list.append([mess,starttime,endtime])
+            elif mess_type == "error":
+                error_list.append([mess,starttime,endtime])
+            else:
+                logger.warning("Unknown message '%s' during Quality Control on "
+                               "metadata %s" %(o,metadata_path))
 
-        # pour chaque ligne :
-        # si erreur : erreur list += erreur
-        # si warning : wrning_list += warning etc
         return error_list, warning_list
 
     def write_metadata(self, inventory,filename):
