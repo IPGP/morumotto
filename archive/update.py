@@ -291,189 +291,33 @@ def update(progress_recorder=FakeProgress(), starttime=None, endtime=None):
            starttime, endtime,
            workspace, config.debug_mode)
 
-    # # Get all existing files for the given time window
-    # file_list = datastructure.get_filelist(
-    #           archive, nslc_list,
-    #           starttime, endtime)
-
     # 2) Compute gaps and overlaps from files and analysis window
     gap_list, overlap_list = stats.get_gapsoverlaps(
                              archive, nslc_list,
                              data_format, data_structure, max_gaps,
                              starttime, endtime,progress_recorder)
-    # print(gap_list)
     # 3) Create requests
     stack.create_requests(config, gap_list)
     # 4) Execute Stack
     # stack.execute_request(config,progress_recorder)
-    # requests = Request.objects.filter(status__in=["new", "retry"])
-    # for req in requests:
-    #     result = tasks.execute_stack.delay(req, config)
-    #     loop_count += 1
-    #     progress_recorder.set_progress(loop_count, len(requests))
-    requests_id_list = [request.pk for request in
-                        Request.objects.filter(
-                        status__in=["new", "retry"])]
-    jobs = tasks.execute_stack.chunks(
-         config.id, requests_id_list, config.n_request)
-    jobs.apply_async()
+    requests = Request.objects.filter(status__in=["new", "retry"])
+    for req in requests:
+        result = tasks.execute_stack.delay(req, config)
+        loop_count += 1
+        progress_recorder.set_progress(loop_count, len(requests))
+    # requests_id_list = [request.pk for request in
+    #                     Request.objects.filter(
+    #                     status__in=["new", "retry"])]
+    # jobs = tasks.execute_stack.chunks(
+    #      config.id, requests_id_list, config.n_request)
+    # jobs.apply_async()
 
-    # 4. bis clean overlaps... ??
-
-    # 5) Clean stack
-    # stack.clean(config, log)
     logger.info("Update archive finished")
 
-    # 6) update statistics -> useless ?
-    # updated_gap_list = stats.get_gapsoverlaps(
-    #                  archive, nslc_list,
-    #                  data_format, data_structure,max_gaps,
-    #                  starttime, endtime)
-
-    # 7) Updating monitoring
+    # 6) update statistics
     update_monitoring.get_stats_from_files(archive, nslc_list, data_format,
                                            data_structure, starttime, endtime,
                                            progress_recorder)
     update_monitoring.average_stats(monitoring)
 
     logger.info("Monitoring updated")
-    # except (TypeError, IndexError) as err:
-    #     print("error", err)
-    #     return 1
-
-
-
-
-# def update_old(progress_recorder):
-#     # Gap.objects.all().delete()
-#     # GapList.objects.all().delete()
-#
-#
-#     config = Configuration.objects.first()
-#     networks = [net.name for net in config.networks.all()]
-#     stations = [sta.name for sta in config.stations.all()]
-#     # sources = [source.name for source in configuration.sources.all()]
-#     nslc_list = [code.nslc for code in config.nslc.all()]
-#
-#     data_struct = config.struct_type
-#     data_format = config.data_format
-#     max_gaps = config.max_gaps_by_analysis
-#     blocksize = config.blocksize
-#     compression = config.compression_format.upper()
-#     workspace = config.working_dir
-#     gran_type = config.granularity_type
-#     frq = config.f_analysis
-#     wnd = config.w_analysis
-#     ltn = config.l_analysis
-#
-#     now = datetime.utcnow()
-#
-#     startday = datetime(
-#                      year=now.year, month=now.month,
-#                      day=now.day,hour=now.hour,minute=now.minute,
-#                      second=now.second,microsecond=now.microsecond
-#                      # hour=00,minute=00,
-#                      # second=00
-#                      )
-#
-#     #5 : update stats (gaps and overlaps) and source inventory. If discontinuity outside of timelaps : put its status to "hold"
-#
-#     starttime = startday - timedelta(days=ltn)
-#     # endtime = starttime + timedelta(days=wnd)
-#     endtime = starttime + timedelta(hours=wnd)
-#
-#     sds = structure.SDS()
-#     channelpaths = sds.browse(config.archive)
-#     # stats.get_gapsoverlaps(starttime,channelpaths)
-#     # connect_infos = "parameters:service.iris.edu?limit-rate=100k"
-#     connect_infos = "client:ws.ipgp.fr?limit-rate=500k"
-#
-#
-#     # create postfile !! attention si le dossier est crée entre temps : pb
-#     if not os.path.exists(os.path.join(workspace,"POST")):
-#         os.makedirs(os.path.join(workspace,"POST"))
-#
-#     postfile = os.path.join(workspace,
-#                             "POST",
-#                             "postfile"+now.strftime('%s')+".txt")
-#
-#     if not os.path.exists(os.path.join(workspace,"LOG")):
-#         os.makedirs(os.path.join(workspace,"LOG"))
-#     log = os.path.join(workspace,
-#                             "LOG",
-#                             "logfile"+now.strftime('%s')+".txt")
-#     starttime = starttime.strftime("%Y-%m-%dT%H:%M:%S")
-#     endtime = endtime.strftime("%Y-%m-%dT%H:%M:%S")
-#     for nslc in nslc_list:
-#         r = add_to_postfile(postfile, nslc, starttime, endtime)
-#
-#     fdsnws = source.FdsnWS()
-#     # r = fdsnws.read(nslc, starttime, endtime, workspace,
-#     #             data_struct, data_format, connect_infos)
-#     r = fdsnws.read(postfile, workspace, data_format, blocksize,
-#                     compression, connect_infos, log)
-#
-#     # on success, remove the postfile
-#     if r==0:
-#          os.remove(postfile)
-#
-#     print("result : ", r)
-#
-
-
-    # for source in Source.objects.all():
-    #     avail[source] = source.availability()
-    #     if avail:
-    #         inv[source] = source.inventory()
-    #
-    # for g in Stat.gaps_list():
-    #     build_request(avail,inv,g.starttime, g.endtime)
-
-
-
-
-
-
-        # request:
-        # data = source.get_data(g.starttime, g.endtime)
-        # process request:
-        # merge(final_archive, data)
-
-    # monitoring.average_stats(progress_recorder) #update average stats
-
-
-    # loop_count = 0
-    # if struct_type=="sds":
-    #     sds.init_archive(fdsnClient("IRIS"))
-    #     progress_recorder.set_progress(loop_count, ltn+wnd+2)
-    #     loop_count += 1
-    #     channelpaths = sds.browse_archive()
-    #     for date in toolbox.daterange(starttime, endtime):
-    #         print("date:", date)
-    #         stats.get_gapsoverlaps(date,channelpaths)
-    #         progress_recorder.set_progress(loop_count, ltn+wnd+2)
-    #         loop_count += 1
-    #         #second iter : statistics done
-    #         for source in sources:
-    #             print("source :", source)
-    #             if source=='fdsnws':
-    #                 fdsn.update(date)
-    #                 stats.get_gapsoverlaps(date,channelpaths)
-    #             elif source=='rt':
-    #                 rt.update()
-    #         progress_recorder.set_progress(loop_count, ltn+wnd+2)
-    #         loop_count += 1
-
-
-def clean_db():
-    Stat.objects.all().delete()
-    AverageStat.objects.all().delete()
-    AverageCompStat.objects.all().delete()
-
-
-def update_db(conf):
-    print("config choice : ", conf)
-    print("getting statistics from archive")
-    update_monitoring.get_stats()
-    print("getting average statistics from archive")
-    update_monitoring.average_stats()

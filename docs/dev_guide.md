@@ -219,7 +219,7 @@ In order to create a new data structure, open the file _plugins/structure.py_ an
 
 ### Django
 
-Version used in Morumotto (so far) is **2.1**
+Version used in Morumotto (so far) is **2.1.15**
 
 #### Tutorial
 
@@ -475,19 +475,29 @@ _registration_ handles the user/password creation
 
 ### Data Update
 
+Let's have a look at _archive/update.py_. The update algorithm is the following : 
+
+<img src="images/update1.png" alt="connect" width="500"/>
+
+<img src="images/update2.png" alt="connect" width="500"/>
+
+First we load configuration, then update the source informations (is it online and the data availability), then the gaps and overlaps are being search in the final archive and stored into the database (through the archive.models.Gap and archive.models.Overlap objects, that you can find in _archive/models.py_).
+
+Then requests are being created, with the _create_request_ method in _archive/stack.py_, when all requests are created, stack is executed with the _execute_stack_ method in _morumotto/tasks.py_ , in order to make this a background task through celery.
+
+_Note_ : the commented section has to be tested, it could handle multitask instead of the lines 302 to 307 (comment this section instead when it works). 
+
+Then statistics and average statistics are being updated for the monitoring interface.
 
 
-gaps overlaps
 
-request
-
+When user creates requests (either through the web interface or command line interface), the same create_request method is called, and execute_stack when user calls exec_stack (from Web interface or command line interface). Then when user calls update statistics in the monitoring interface, the get_stats_from_files is called.
 
 
-### Statistics
 
-average
+Monitoring statistics are daily statistics directly read from files thanks to the obspy get_gaps() method, get_gaps_overlaps method is a little more complex, as it handles gaps and overlaps which can be over a long period of time.
 
-
+Average_stats is a method that computes average statistics (gaps & overlaps) for networks, this is only for the monitoring interface.
 
 
 
@@ -499,11 +509,19 @@ average
 
 <img src="images/logdb.png" alt="connect" width="500"/>
 
-#### 
-
 Log files are saved into the database.
 
+There are several kind of logs:
 
+<img src="images/log_admin.png" alt="connect" width="500"/>
+
+They are defined in the beginning of each files containing stuff to be send to the log. For example in the quality control file _qualitycontrol/qc.py_ , one can see 
+
+<img src="images/log_def.png" alt="connect" width="500"/>
+
+The logger will send messages to the Qc logs in the database, which can be found in the admin interface; 
+
+Important : the Software logs contains all legs sent by the django backend (in the _views.py_ files), they can be useful to see if somethings wrong withing the web interface, on the backend side.
 
 #### Development
 
@@ -583,9 +601,7 @@ I remind that we defined the stack execution as being able to process a certain 
 
 - Quality control
 
-What's missing at the moment :
-
-
+What's missing at the moment : Data Checks, Metadata Checks, Data vs Metadata Checks
 
 - Testing 
 
