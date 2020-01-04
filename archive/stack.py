@@ -261,6 +261,9 @@ def create_requests(config, gap_list, source_list=None):
         nslc = gap.nslc
         if source_list==None:
             source_list = config.sources.filter(nslc__code=nslc)
+            if not source_list:
+                logger.warning("No sources has been found for %s, did"
+                               "you configure it correctly?" %nslc)
 
         for source in source_list.order_by("priority"):
             if not source.is_online:

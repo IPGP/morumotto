@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 from django import forms
-from .models import Metadata, LastUpdate, QCConfig
+from .models import Metadata, LastUpdate, QCConfig, Message
 
 class MetadataAdmin(admin.ModelAdmin):
     list_display = ('get_code', 'file')
@@ -34,3 +34,4 @@ class QCConfigAdmin(admin.ModelAdmin):
 admin.site.register(QCConfig,QCConfigAdmin)
 admin.site.register(Metadata, MetadataAdmin)
 admin.site.register(LastUpdate)
+admin.site.register(Message)

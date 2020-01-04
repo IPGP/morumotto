@@ -11,6 +11,7 @@ from django.utils.crypto import get_random_string
 from .models import NSLC, SourceAvailability, SourceAvailabilityStat, \
     SourceOnlineStat, Configuration, Gap, Overlap, Request
 from . import stats, stack
+from morumotto import tasks
 from monitoring import update_monitoring
 from monitoring.models import ArchiveMonitoring
 from plugins import structure, format, source
@@ -122,6 +123,14 @@ def update_availability(source, nslc_list, availability_file,
                                  microsecond=00)
             seg_end = seg_start + timedelta(days=1)
             for nslc in nslc_list:
+                if SourceAvailability.objects.filter(
+                                 source=source, nslc=nslc,
+                                 starttime=seg_start,
+                                 endtime=seg_end).count() > 1:
+                    SourceAvailability.objects.filter(
+                                     source=source, nslc=nslc,
+                                     starttime=seg_start,
+                                     endtime=seg_end).delete()
                 d_avail, created = SourceAvailability.objects.get_or_create(
                                  source=source, nslc=nslc,
                                  starttime=seg_start, endtime=seg_end)
@@ -299,10 +308,11 @@ def update(progress_recorder=FakeProgress(), starttime=None, endtime=None):
     # 3) Create requests
     stack.create_requests(config, gap_list)
     # 4) Execute Stack
-    # stack.execute_request(config,progress_recorder)
+    loop_count = 0
     requests = Request.objects.filter(status__in=["new", "retry"])
     for req in requests:
-        result = tasks.execute_stack.delay(req, config)
+        stack.execute_request(req, config)
+        # result = tasks.execute_stack.delay(req, config)
         loop_count += 1
         progress_recorder.set_progress(loop_count, len(requests))
     # requests_id_list = [request.pk for request in

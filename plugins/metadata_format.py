@@ -82,20 +82,27 @@ class stationXML(MetadataFormat):
 
         result = subprocess.run(validator_script, stdout=subprocess.PIPE)
         i=0
-        output = result.stdout.decode('utf-8').split("\n")
+        output = result.stdout.decode('utf-8').split("\n")[1:]
         error_list = list()
         warning_list = list()
 
         for o in output:
-            starttime = o.split(",")[7]
-            endtime = o.split(",")[8]
-            mess_type = o.split(",")[2].lower()
-            mess = o.split(",")[9]
+            try:
+                starttime = o.split(",")[7]
+                endtime = o.split(",")[8]
+                mess_type = o.split(",")[2].lower()
+                mess = o.split(",")[9]
+                print("type:", mess_type,"---------mess:", mess)
+            except (IndexError) as err:
+                logger.exception("%s. Wrong format for metadata %s, validator "
+                                 "message is : %s" %(err, metadata_path, o))
+                continue
             if mess_type == "warning":
                 warning_list.append([mess,starttime,endtime])
             elif mess_type == "error":
                 error_list.append([mess,starttime,endtime])
             else:
+                print("in else")
                 logger.warning("Unknown message '%s' during Quality Control on "
                                "metadata %s" %(o,metadata_path))
 

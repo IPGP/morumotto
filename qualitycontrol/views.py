@@ -115,11 +115,11 @@ def update_metadata(request):
 
 
 def check_metadata(request):
+    metadata_list = Metadata.objects.none()
     if QCConfig.objects.count() == 0:
         logger.error("no QC configuration")
         return HttpResponseRedirect('/home/init_qcconfig')
     config = QCConfig.objects.first()
-    metadata = Metadata.objects.none()
     if request.POST.get("check_metadata"):
         form = MetadataDatesForm(request.POST)
         if form.is_valid():
@@ -130,7 +130,8 @@ def check_metadata(request):
     else:
         form = MetadataDatesForm()
     context = { "form" : form }
-    context["metadata_report"] = metadata
+
+    context["metadata_report"] = metadata_list
     return render(request, 'qualitycontrol/check_metadata.html', context)
 
 

@@ -89,7 +89,7 @@ class Message(models.Model):
         (('error'), ('Error')),
     )
 
-    msg = models.CharField(max_length=200)
+    msg = models.CharField(max_length=300)
     type = models.CharField(max_length=25,
                             choices=TYPE_CHOICES,
                             default="info")

@@ -164,16 +164,20 @@ def md_check(config, metadata_list, starttime=None,endtime=None):
             error_start = error[1]
             error_end = error[2]
             # test starttime, endtime
-            error_msg = Message(type='error',msg=error[0])
-            metadata.messages.add(error_msg)
-            metadata.save()
+            error_msg, created = Message.objects.get_or_create(
+                               type='error',msg=error[0])
+            if created:
+                metadata.messages.add(error_msg)
+                metadata.save()
         for warning in warning_list:
             warning_start = warning[1]
             warning_end = warning[2]
             # test starttime, endtime
-            warning_msg = Message(type='warning',msg=warning[0])
-            metadata.messages.add(warning_msg)
-            metadata.save()
+            warning_msg, created = Message.objects.get_or_create(
+                                 type='warning',msg=warning[0])
+            if created:
+                metadata.messages.add(warning_msg)
+                metadata.save()
 
 
 def metadata_vs_data(config, nslc_list, starttime=None,endtime=None):

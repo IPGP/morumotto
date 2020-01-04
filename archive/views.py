@@ -96,7 +96,6 @@ def newrequest(request):
             starttime = new_request.cleaned_data["starttime"]
             endtime = new_request.cleaned_data["endtime"]
             force_source = new_request.cleaned_data["force_source"]
-            print("nslc_list", nslc_list)
             if source_form.is_valid():
                 source_list = source_form.cleaned_data["source_list"]
                 if not source_list.count():

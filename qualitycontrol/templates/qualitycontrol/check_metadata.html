@@ -62,13 +62,15 @@
               </tr>
             </thead>
             <tbody>
-              {%for message in metadata_report %}
-                <tr>
-                  <td>{{message.nslc.code}}</td>
-                  <td>{{message.lon}}</td>
-                  <td>{{message.id}}</td>
-                  <td>{{message.file}}</td>
-                </tr>
+              {% for md in metadata_report %}
+                {% for message in md.messages.all %}
+                    <tr>
+                      <td>{{md.nslc.code}}</td>
+                      <td>{{message.type}}</td>
+                      <td>{{message.msg}}</td>
+                      <td>{{md.file}}</td>
+                    </tr>
+                {% endfor %}
               {% endfor %}
             </tbody>
             <tfoot>
@@ -78,6 +80,7 @@
                     Filtering:
                   </button>
                 </th>
+                <th></th>
                 <th></th>
                 <th></th>
               </tr>
