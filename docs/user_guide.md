@@ -692,30 +692,7 @@ python manage.py loaddata > db.json
 
 ### 2. Monitoring
 
-- Network
-
-  - Gaps
-
-
-
-  - Overlaps
-
-
-
--  Stations
-
-  - Gaps
-  - Overlaps
-  - Data Availability
-
-- Statistics
-
-  - Table
-  - Plot
-
-- Admin
-  - Group components in 'others'
-  - Change setup
+See video : 
 
 ### 3. Stack
 
@@ -744,13 +721,7 @@ python manage.py loaddata > db.json
   - Configure QC
   - Delete metadata
 
-### 5. Celery
-
-### 6. Crontab
-
-
-
-### 7. Admin
+### 5. Admin
 
 - Admin interface
 - Delete objects
@@ -759,12 +730,11 @@ python manage.py loaddata > db.json
 
 
 
-### 8. Use Cases
+### 6. Use Cases
 
 
 
 <div style="page-break-after: always;"></div>
-
 
 
 
