@@ -211,7 +211,7 @@ class Configuration(models.Model):
     data_format = models.CharField(
                 max_length=50,
                 choices=DATAFORMAT_CHOICES,
-                default='SEED')
+                default='miniSEED')
     # metadata_format = models.CharField(
     #                 max_length=50,
     #                 choices=METADATAFORMAT_CHOICES,
