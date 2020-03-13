@@ -25,13 +25,13 @@ class Command(BaseCommand):
     help = 'Update data according to the time window defined in config'
 
     def add_arguments(self, parser):
-        parser.add_argument('starttime', type=str,
+        parser.add_argument('--starttime', type=str,
                             help='Starttime,'
                             'format must be like "1977-04-22T06:00:00Z"', )
-        parser.add_argument('endtime', type=str,
+        parser.add_argument('--endtime', type=str,
                             help='Endtime,'
                             'format must be like "1977-04-22T06:00:00Z"', )
-        parser.add_argument('nslc_list', nargs='+', type=str,
+        parser.add_argument('--nslc_list', nargs='+', type=str,
                             help='NSLC you want to update')
         parser.add_argument('--source_list', nargs='+', type=str,
                             help='Sources you want to use')
@@ -44,12 +44,13 @@ class Command(BaseCommand):
                                "software first")
 
         source_list = Source.objects.filter(name__in=options["source_list"])
-        nscl_codes = option["nslc_list"]
+        nscl_codes = options["nslc_list"]
         # HANDLE WILDCARDS :
         for nslc in nscl_codes:
             if "*" in nslc or "?" in nslc:
                 nslc_codes = list()
                 n,s,l,c = nslc.split('.')
+
                 if n=="*":
                     net_list = Network.objects.all()
                 elif "?" in n:
@@ -66,6 +67,7 @@ class Command(BaseCommand):
                 else:
                     sta_list = Station.objects.filter(network__in=net_list,
                                                     name=s)
+
                 if l=="*":
                     loc_list = Location.objects.filter(network__in=net_list,
                                                       station__in=sta_list)
@@ -74,7 +76,7 @@ class Command(BaseCommand):
                              station__in=sta_list,
                              name__contains=l.replace("?",""))
                 else:
-                    loc_list = Location.objects.filter(network__in=net_list,,
+                    loc_list = Location.objects.filter(network__in=net_list,
                              station__in=sta_list,
                              name=l)
 
@@ -88,14 +90,14 @@ class Command(BaseCommand):
                              location_in=loc_list,
                              name__contains=c.replace("?",""))
                 else:
-                    chan_list = Channel.objects.filter(network__in=net_list,,
+                    chan_list = Channel.objects.filter(network__in=net_list,
                              station__in=sta_list,
                              location_in=loc_list,
                              name=c)
 
 
-              nscl_codes.remove(nslc)
-              nslc_codes.extend([nslc.code for nslc in NSLC.objects.filter(
+            nscl_codes.remove(nslc)
+            nslc_codes.extend([nslc.code for nslc in NSLC.objects.filter(
                                  net__in=net_list,
                                  sta__in=chan_list,
                                  loc__in=loc_list,
