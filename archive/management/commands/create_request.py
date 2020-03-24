@@ -44,9 +44,9 @@ class Command(BaseCommand):
                                "software first")
 
         source_list = Source.objects.filter(name__in=options["source_list"])
-        nscl_codes = options["nslc_list"]
+        nslc_codes = options["nslc_list"]
         # HANDLE WILDCARDS :
-        for nslc in nscl_codes:
+        for nslc in nslc_codes:
             if "*" in nslc or "?" in nslc:
                 nslc_codes = list()
                 n,s,l,c = nslc.split('.')
@@ -96,7 +96,7 @@ class Command(BaseCommand):
                              name=c)
 
 
-            nscl_codes.remove(nslc)
+            nslc_codes.remove(nslc)
             nslc_codes.extend([nslc.code for nslc in NSLC.objects.filter(
                                  net__in=net_list,
                                  sta__in=chan_list,
