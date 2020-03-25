@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 from archive.models import Configuration, Source, Gap, NSLC, \
     Network, Station, Location, Channel
 from archive import update, stack, stats
+from datetime import *
 import logging
 import os
 
@@ -16,10 +17,10 @@ class Command(BaseCommand):
     This class defines the create_request command for django manager
 
     You can now call
-    python manage.py create_request --window_starttime 2019-05-23T00:00:00Z
-    --window_endtime 2019-05-24T00:00:00Z
+    python manage.py create_request --starttime 2019-05-23T00:00:00Z
+    --endtime 2019-05-24T00:00:00Z
 
-    --window_starttime and --window_endtime are optional. If not set, we use
+    --starttime and --endtime are optional. If not set, we use
     the ones in configuration
     """
     help = 'Update data according to the time window defined in config'
@@ -44,62 +45,48 @@ class Command(BaseCommand):
                                "software first")
 
         source_list = Source.objects.filter(name__in=options["source_list"])
-        nslc_codes = options["nslc_list"]
+        nslc_codes_toget = options["nslc_list"]
         # HANDLE WILDCARDS :
-        for nslc in nslc_codes:
-            if "*" in nslc or "?" in nslc:
-                nslc_codes = list()
-                n,s,l,c = nslc.split('.')
+        for nslc in nslc_codes_toget:
+            nslc_codes = list()
+            n,s,l,c = nslc.split('.')
 
-                if n=="*":
-                    net_list = Network.objects.all()
-                elif "?" in n:
-                    net_list = Network.objects.filter(
-                             name__contains=n.replace("?",""))
-                else:
-                    net_list = Network.objects.filter(name=n)
+            if n=="*":
+                net_list = Network.objects.all()
+            elif "?" in n:
+                net_list = Network.objects.filter(
+                         name__contains=n.replace("?",""))
+            else:
+                net_list = Network.objects.filter(name=n)
 
-                if s=="*":
-                    sta_list = Station.objects.filter(network__in=net_list)
-                elif "?" in s:
-                    sta_list = Station.objects.filter(network__in=net_list,
-                             name__contains=s.replace("?",""))
-                else:
-                    sta_list = Station.objects.filter(network__in=net_list,
-                                                    name=s)
+            if s=="*":
+                sta_list = Station.objects.filter(network__in=net_list)
+            elif "?" in s:
+                sta_list = Station.objects.filter(network__in=net_list,
+                         name__contains=s.replace("?",""))
+            else:
+                sta_list = Station.objects.filter(network__in=net_list,
+                         name=s)
 
-                if l=="*":
-                    loc_list = Location.objects.filter(network__in=net_list,
-                                                      station__in=sta_list)
-                elif "?" in l:
-                    loc_list = Location.objects.filter(network__in=net_list,
-                             station__in=sta_list,
-                             name__contains=l.replace("?",""))
-                else:
-                    loc_list = Location.objects.filter(network__in=net_list,
-                             station__in=sta_list,
-                             name=l)
+            if l=="*":
+                loc_list = Location.objects.filter()
+            elif "?" in l:
+                loc_list = Location.objects.filter(name__contains=l.replace("?",""))
+            else:
+                loc_list = Location.objects.filter(name=l)
 
-                if c=="*":
-                    chan_list = Channel.objects.filter(network__in=net_list,
-                                                      station__in=sta_list,
-                                                      location_in=loc_list)
-                elif "?" in c:
-                    chan_list = Channel.objects.filter(network__in=net_list,
-                             station__in=sta_list,
-                             location_in=loc_list,
-                             name__contains=c.replace("?",""))
-                else:
-                    chan_list = Channel.objects.filter(network__in=net_list,
-                             station__in=sta_list,
-                             location_in=loc_list,
-                             name=c)
+            if c=="*":
+                chan_list = Channel.objects.filter()
+            elif "?" in c:
+                chan_list = Channel.objects.filter(name__contains=c.replace("?",""))
+            else:
+                chan_list = Channel.objects.filter(name=c)
 
 
-            nslc_codes.remove(nslc)
+            nslc_codes_toget.remove(nslc)
             nslc_codes.extend([nslc.code for nslc in NSLC.objects.filter(
                                  net__in=net_list,
-                                 sta__in=chan_list,
+                                 sta__in=sta_list,
                                  loc__in=loc_list,
                                  chan__in=chan_list)])
 
@@ -117,7 +104,7 @@ class Command(BaseCommand):
         if not source_list.count():
             source_list = None
         workspace = WORKING_DIR
-        update = update.update_source_infos(
+        update.update_source_infos(
                  nslc_list, source_list,
                  starttime, endtime,
                  workspace)
