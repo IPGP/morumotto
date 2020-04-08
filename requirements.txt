@@ -7,7 +7,7 @@ chardet==3.0.4
 croniter==0.3.30
 cycler==0.10.0
 decorator==4.4.0
-Django==2.1.15
+Django==2.2.10
 django-admin-colors==0.2.0
 django-betterforms==1.2
 django-bootstrap-datepicker-plus==3.0.5
