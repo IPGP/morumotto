@@ -23,16 +23,26 @@ fi
 os=$(echo $OS | awk -F '[ ]' '{print tolower($1)}')
 
 if [[ ${os} == 'ubuntu' && ${VER} < 16.10 ]]; then
-  echo -e "\n ERROR : Ubuntu version < 16.10"
+  echo -e "\n WARNING : Ubuntu version < 16.10"
   echo -e "This installer will probably not work and you need to\
-  install manually or upgrade your system (recommanded). See README.md"
-  exit
+  install manually or upgrade your system (recommanded). See README.md\n"
+  read -p "Do you want to continue ? [(y)/n] > " answer
+  if [[ "${answer}" =~ ^([Nn])+$ ]] ;then
+    echo -e "\n OK, exiting install, bye"
+    exit
+  fi
 elif [[ ${os} == 'debian' && ${VER} < 9 ]]; then
-  echo -e "\n ERROR : Debian version < 9"
+  echo -e "\n WARNING : Debian version < 9"
   echo -e "This installer will probably not work and you need to\
-  install manually or upgrade your system (recommanded). See README.md"
-  exit
+  install manually or upgrade your system (recommanded). See README.md \n"
+  read -p "Do you want to continue ? [(y)/n] > " answer
+  if [[ "${answer}" =~ ^([Nn])+$ ]] ;then
+    echo -e "\n OK, exiting install, bye"
+    exit
+  fi
 fi
+
+
 
 #________________________INSTALL DEPENDENCIES________________________#
 if [ ${os} == 'ubuntu' ]; then
@@ -42,10 +52,18 @@ if [ ${os} == 'ubuntu' ]; then
   if ! [[ "${answer}" =~ ^([Nn])+$ ]] ;then
     echo -e ", installing dependencies automatically :) "
     sudo apt-get install -y wget make python-pip default-jre \
-    rabbitmq-server libpython3.6-dev supervisor cpulimit libssl-dev ||\
-    $(echo -e "\n ERROR: Can't install dependencies. \
-    Either upgrade our system to a newer version or install manually. \
-    See README.md"; exit)
+    rabbitmq-server libpython3.6-dev supervisor cpulimit libssl-dev
+    apt_return=$?
+    if [[ ${apt_return} != 0 ]]; then
+      echo -e "\n WARNING: Can't install all dependencies. If the software \
+      doesn't work try installing manually failed dependencies \n"
+      read -p "Do you want to continue ? [(y)/n] > " answer
+      echo "answer : $answer"
+      if [[ "${answer}" =~ ^([Nn])+$ ]] ;then
+        echo -e "\n OK, exiting install, bye"
+        exit
+      fi
+    fi
   fi
 elif [ ${os} == 'debian' ]; then
   dep_list="python wget make pip rabbitmq-server supervisord default-jre"
@@ -55,10 +73,18 @@ elif [ ${os} == 'debian' ]; then
     echo -e ", installing dependencies automatically :) "
     sudo apt-get install -y wget make python-pip default-jre \
     python3-dev libpython3.6-dev libssl-dev\
-    python3-venv supervisor cpulimit ||\
-    $(echo -e "\n ERROR: Can't install dependencies. \
-    Either upgrade our system to a newer version or install manually. \
-    See README.md"; exit)
+    python3-venv supervisor cpulimit
+    apt_return=$?
+    if [[ ${apt_return} != 0 ]]; then
+      echo -e "\n WARNING: Can't install all dependencies. If the software \
+      doesn't work try installing manually failed dependencies \n"
+      read -p "Do you want to continue ? [(y)/n] > " answer
+      echo "answer : $answer"
+      if [[ "${answer}" =~ ^([Nn])+$ ]] ;then
+        echo -e "\n OK, exiting install, bye"
+        exit
+      fi
+    fi
   fi
 fi
 
@@ -69,13 +95,17 @@ continue=1
 
 for dep in ${dep_list}; do
   if ! [ -x "$(command -v ${dep})" ]; then
-    echo -e "ERROR: ${dep} not found"
+    echo -e "WARNING: ${dep} not found"
     echo -e "Please install ${dep}"
     continue=0
   fi
 done
 if [ ${continue} -eq 0 ]; then
-  exit
+  read -p "Do you want to continue ? [(y)/n] > " answer
+  if [[ "${answer}" =~ ^([Nn])+$ ]] ;then
+    echo -e "\n OK, exiting install, bye"
+    exit
+  fi
 fi
 
 mkdir -p ${dir}/bin
@@ -119,9 +149,9 @@ fi
 
 if ! [ -x "$(command -v ${dir}/bin/sdrsplit)" ]; then
   echo -e "\nsdrsplit not found in ${dir}/bin, installing"
-  wget http://www.ncedc.org/qug/software/ucb/sdrsplit.2013.260.tar.gz --timeout=30 ||\
+  wget http://www.ncedc.org/qug/software/ucb/sdrsplit.2020.079.tar.gz --timeout=30 ||\
   echo -e "Can't install sdrsplit, please install it and re-run this script"
-  tar -xzf sdrsplit.2013.260.tar.gz || exit
+  tar -xzf sdrsplit.2020.079.tar.gz || exit
   cp sdrsplit/sdrsplit ${dir}/bin
 else
   echo -e "\nINFO: sdrsplit already installed."
@@ -261,7 +291,7 @@ if [[ "${SYS_PYTHON_VERSION}" < 3.3 ]]; then
     echo -e "\napt install virtualenv"
     exit
   else
-    virtualenv morumotto-env -p python3.6
+    virtualenv morumotto-env -p python3
   fi
 else
   python -m venv morumotto-env || exit
@@ -277,7 +307,7 @@ fi;
 source morumotto-env/bin/activate
 pip install numpy==1.16.4 || exit
 # Due to a bug in obspy setup.py, we need to install numpy first
-pip install -q -r requirements.txt || (echo -e "\Error while installing project's \
+pip install -r requirements.txt || (echo -e "\Error while installing project's \
 python requirements. Possibly missing dependencies. Try : \n \
 sudo apt install libmysqlclient-dev libpython3.6-dev libssl-dev  \n \
 \n and execute installer again.\
