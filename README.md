@@ -1,10 +1,10 @@
 #### MORUMOTTO
 
 1. [Installation](#Installation)
-    1. [With installer](#METHOD 1 : TL;DR)
-    2. [Manual installation](#METHOD 2 : Manual installation)
-2. [Getting Started](#Getting Started)
-3. [Read the docs](#Read the docs)
+    1. [With installer](#method-1--tldr)
+    2. [Manual installation](#method-2--manual-installation)
+2. [Getting Started](#getting-started)
+3. [Read the docs](#read-the-docs)
 ## Installation
 
 ### METHOD 1 : TL;DR
