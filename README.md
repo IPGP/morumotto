@@ -440,4 +440,4 @@ python manage.py runserver
 
 ## Read the docs
 
-[user_guide.pdf](https://k2.ipgp.fr/geber/siqaco/raw/master/docs/user_guide.pdf?inline=false)
+[User and Dev guides](docs/)
