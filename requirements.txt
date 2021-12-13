@@ -28,7 +28,7 @@ future==0.17.1
 idna==2.8
 kiwisolver==1.1.0
 kombu==4.6.1
-lxml==4.6.3
+lxml==4.6.5
 matplotlib==3.1.0
 mysql==0.0.2
 mysql-connector-python==8.0.16
