@@ -23,7 +23,7 @@ django-modeladmin-reorder==0.3.1
 django-reset-migrations==0.3.1
 django-tempus-dominus==5.1.2.5
 django-timezone-field==3.0
-flower==0.9.3
+flower==1.2.0
 future==0.17.1
 idna==2.8
 kiwisolver==1.1.0
