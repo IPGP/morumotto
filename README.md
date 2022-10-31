@@ -1,5 +1,7 @@
 #### MORUMOTTO
 
+This development has been partly funded by the Eurovolc H2020 project.
+
 1. [Installation](#Installation)
     1. [With installer](#method-1--tldr)
     2. [Manual installation](#method-2--manual-installation)
