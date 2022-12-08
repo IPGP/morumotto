@@ -2,7 +2,7 @@ amqp==2.5.0
 billiard==3.6.0.0
 celery==4.3.0
 celery-progress==0.0.3
-certifi==2019.3.9
+certifi==2022.12.7
 chardet==3.0.4
 croniter==0.3.30
 cycler==0.10.0
