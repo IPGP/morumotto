@@ -1,6 +1,6 @@
 amqp==2.5.0
 billiard==3.6.0.0
-celery==4.3.0
+celery==5.2.2
 celery-progress==0.0.3
 certifi==2022.12.7
 chardet==3.0.4
